@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "valantic-knowledge-layer": {
+      "command": "/Users/vytruchenko/Desktop/valantic-memory/.venv/bin/python",
+      "args": ["/Users/vytruchenko/Desktop/valantic-memory/mcp_server.py"]
+    }
+  }
+}
