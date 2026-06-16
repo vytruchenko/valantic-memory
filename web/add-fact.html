@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>valantic Knowledge Layer — Capture a Fact</title>
+
+  <!-- Zero-build: Tailwind via CDN. No npm, no bundler. -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        colors: {
+          brand: { DEFAULT: '#e6007e', dark: '#b80064', light: '#ffe3f1' }, // valantic-ish magenta — swap for exact brand hex
+          ink:   { DEFAULT: '#0f172a', soft: '#334155' },
+        },
+        fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+      } },
+    };
+  </script>
+  <style>:root{font-size:16px}.pre-wrap{white-space:pre-wrap;word-break:break-word}</style>
+</head>
+
+<body class="bg-slate-50 text-ink min-h-screen">
+
+  <!-- ============================ HEADER ============================ -->
+  <header class="bg-ink text-white">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="h-8 w-8 rounded bg-brand flex items-center justify-center font-bold">v</div>
+        <div>
+          <h1 class="text-lg font-semibold leading-tight">valantic Knowledge Layer</h1>
+          <p class="text-xs text-slate-300 leading-tight">Capture a fact &middot; tell it, don't fill it</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span id="extractPill" class="text-xs font-medium px-3 py-1.5 rounded-full bg-slate-700 text-slate-200">extraction…</span>
+        <span id="storePill"   class="text-xs font-medium px-3 py-1.5 rounded-full bg-slate-700 text-slate-200">store…</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 py-6 space-y-6">
+
+    <!-- ====================== STORY (the headline) ====================== -->
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <label class="block text-base font-semibold mb-1">Describe the fact, or tell a quick story</label>
+      <p class="text-sm text-slate-500 mb-3">
+        Plain language — Claude pulls out the structured fields. Use placeholders
+        (<code>&lt;kunde&gt;</code>, <code>&lt;path&gt;</code>, <code>&lt;person&gt;</code>) for anything sensitive.
+      </p>
+      <textarea id="story" rows="4"
+        class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-brand focus:border-brand"
+        placeholder="e.g. We just moved the CRA gap-assessment template to the compliance share, and Maya in the CISO office owns it now. Use it before quoting any CRA-readiness work."></textarea>
+
+      <div class="mt-2 flex flex-wrap gap-1.5">
+        <span class="text-xs text-slate-400 mr-1 self-center">try:</span>
+        <button type="button" class="example text-xs px-2 py-1 rounded-full bg-slate-100 hover:bg-brand-light">CRA template moved</button>
+        <button type="button" class="example text-xs px-2 py-1 rounded-full bg-slate-100 hover:bg-brand-light">go-to SAP integration expert</button>
+        <button type="button" class="example text-xs px-2 py-1 rounded-full bg-slate-100 hover:bg-brand-light">estimation rule of thumb</button>
+      </div>
+
+      <div class="mt-4 flex flex-wrap items-center gap-3">
+        <button id="extractBtn" type="button"
+          class="px-5 py-2.5 rounded-lg bg-brand text-white font-medium hover:bg-brand-dark transition disabled:opacity-50">
+          ✨ Extract fields
+        </button>
+        <button id="manualBtn" type="button" class="text-sm text-slate-500 hover:text-brand">or fill in manually</button>
+        <span id="extractMsg" class="text-sm"></span>
+      </div>
+    </section>
+
+    <!-- ====================== REVIEW + PREVIEW ====================== -->
+    <div id="reviewWrap" class="grid grid-cols-1 lg:grid-cols-2 gap-6 hidden">
+
+      <!-- fields (pre-filled after extraction; editable) -->
+      <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="text-sm font-semibold">Review &amp; save</h2>
+          <div class="flex items-center gap-3">
+            <select id="factPicker" title="Edit an existing fact"
+              class="hidden text-xs rounded-lg border border-slate-300 px-2 py-1 focus:ring-2 focus:ring-brand">
+              <option value="">— edit existing… —</option>
+            </select>
+            <button id="resetBtn" type="button" class="text-xs text-slate-500 hover:text-brand">reset</button>
+          </div>
+        </div>
+
+        <form id="factForm" class="space-y-4" novalidate>
+          <div>
+            <label class="block text-sm font-medium mb-1">Description <span class="text-brand">*</span></label>
+            <input id="description" type="text" maxlength="180" autocomplete="off"
+              placeholder="One line — the recall hook"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-brand focus:border-brand" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Slug (file name) <span class="text-brand">*</span></label>
+            <div class="flex items-center gap-2">
+              <code class="text-xs text-slate-400">memory/</code>
+              <input id="name" type="text" autocomplete="off" placeholder="kebab-case-name"
+                class="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-brand focus:border-brand" />
+              <code class="text-xs text-slate-400">.md</code>
+            </div>
+            <p id="nameWarn" class="mt-1.5 text-xs hidden"></p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Type</label>
+              <select id="type" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand">
+                <option value="reference">reference</option>
+                <option value="user">user</option>
+                <option value="feedback">feedback</option>
+                <option value="project">project</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Practice</label>
+              <input id="practice" type="text" list="practiceList" autocomplete="off"
+                placeholder="valantic practice area"
+                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand" />
+              <datalist id="practiceList">
+                <option value="SAP Core Business Services"></option>
+                <option value="Strategy &amp; Transformation"></option>
+                <option value="Transformation &amp; Security"></option>
+                <option value="Customer Experience"></option>
+                <option value="Data &amp; AI"></option>
+              </datalist>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Source bot</label>
+              <select id="sourceBot" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand">
+                <option value="human">human</option>
+                <option value="claude">claude</option>
+                <option value="chatgpt">chatgpt</option>
+                <option value="copilot">copilot</option>
+                <option value="vally">vally</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Origin</label>
+              <select id="origin" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand">
+                <option value="manual">manual</option>
+                <option value="conversation">conversation</option>
+                <option value="document">document</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Fact <span class="text-brand">*</span></label>
+            <textarea id="body" rows="4"
+              class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-brand focus:border-brand"
+              placeholder="The fact itself — placeholders only for sensitive values."></textarea>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Related facts</label>
+              <input id="related" type="text" autocomplete="off" placeholder="comma-separated slugs"
+                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Created</label>
+              <input id="created" type="date"
+                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand" />
+              <p id="versionNote" class="mt-1 text-xs text-slate-400">New fact → version 1.</p>
+            </div>
+          </div>
+
+          <div class="pt-1 flex flex-wrap items-center gap-3">
+            <button id="saveBtn" type="submit"
+              class="px-5 py-2.5 rounded-lg bg-brand text-white font-medium hover:bg-brand-dark transition disabled:opacity-50">Save fact</button>
+            <button id="copyBtn" type="button" class="px-4 py-2.5 rounded-lg border border-slate-300 text-sm hover:bg-slate-50">Copy markdown</button>
+            <button id="downloadBtn" type="button" class="px-4 py-2.5 rounded-lg border border-slate-300 text-sm hover:bg-slate-50">Download .md</button>
+            <span id="formMsg" class="text-sm"></span>
+          </div>
+        </form>
+      </section>
+
+      <!-- live preview -->
+      <section class="space-y-4">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="px-4 py-2.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between">
+            <span class="text-sm font-medium">Live file preview</span>
+            <code id="filePath" class="text-xs text-slate-500">memory/&lt;name&gt;.md</code>
+          </div>
+          <pre id="preview" class="pre-wrap p-4 text-sm font-mono text-ink-soft leading-relaxed min-h-[300px]"></pre>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="px-4 py-2.5 bg-slate-100 border-b border-slate-200">
+            <span class="text-sm font-medium">Appends to <code class="text-xs">MEMORY.md</code></span>
+          </div>
+          <pre id="indexLine" class="pre-wrap p-4 text-sm font-mono text-ink-soft"></pre>
+        </div>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          The actual markdown file written to the git-backed store — the same store the
+          MCP server reads and the dashboard renders. Humans and bots, one source of truth.
+        </p>
+      </section>
+    </div>
+  </main>
+
+  <!-- ============================ LOGIC ============================ -->
+  <script>
+  (() => {
+    "use strict";
+
+    // ---- config ---------------------------------------------------------
+    const params = new URLSearchParams(location.search);
+    const EXTRACT_BASE  = (params.get("extract") || "http://127.0.0.1:8788").replace(/\/$/, "");
+    const MEMORIES_BASE = (params.get("api")     || "http://127.0.0.1:8787").replace(/\/$/, "");
+    const EXTRACT_URL  = EXTRACT_BASE + "/api/extract";
+    const HEALTH_URL   = EXTRACT_BASE + "/api/health";
+    const MEMORIES_URL = MEMORIES_BASE + "/api/memories";
+
+    // ---- state ----------------------------------------------------------
+    let facts = [], storeOnline = false, extractOnline = false, nameEdited = false;
+
+    const $ = (id) => document.getElementById(id);
+    const els = {
+      extractPill: $("extractPill"), storePill: $("storePill"), story: $("story"),
+      extractBtn: $("extractBtn"), manualBtn: $("manualBtn"), extractMsg: $("extractMsg"),
+      reviewWrap: $("reviewWrap"), factPicker: $("factPicker"), resetBtn: $("resetBtn"),
+      form: $("factForm"), description: $("description"), name: $("name"), nameWarn: $("nameWarn"),
+      type: $("type"), practice: $("practice"), sourceBot: $("sourceBot"), origin: $("origin"),
+      body: $("body"), related: $("related"), created: $("created"), versionNote: $("versionNote"),
+      saveBtn: $("saveBtn"), copyBtn: $("copyBtn"), downloadBtn: $("downloadBtn"),
+      formMsg: $("formMsg"), preview: $("preview"), indexLine: $("indexLine"), filePath: $("filePath"),
+    };
+
+    const EXAMPLES = {
+      "CRA template moved": "We just moved the CRA gap-assessment template to the compliance share, and Maya Singh in the CISO office owns it now. Use it before quoting any CRA-readiness work for <kunde>.",
+      "go-to SAP integration expert": "For SAP order-management to commerce-frontend integration questions, Marco Reinhardt in SAP Core is the go-to. He owns the integration-pattern library and should be booked early on retail commerce engagements.",
+      "estimation rule of thumb": "Rule of thumb from the delivery-leads workshop: carry 20-25% contingency on any engagement crossing three or more practice areas, and size discovery at about 10% of total effort.",
+    };
+
+    // ---- helpers --------------------------------------------------------
+    const slugify = (s) => (s || "").toLowerCase().trim()
+      .replace(/[^\w\s-]/g, "").replace(/[\s_]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    const isKebab = (s) => /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s);
+    const todayISO = () => { const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
+    const findFact = (name) => facts.find((f) => f.name === name);
+
+    function read() {
+      const name = els.name.value.trim();
+      const existing = findFact(name);
+      const related = els.related.value.split(",").map((s) => slugify(s)).filter(Boolean);
+      return {
+        name, description: els.description.value.trim(), type: els.type.value,
+        practice: els.practice.value.trim(), source_bot: els.sourceBot.value, origin: els.origin.value,
+        body: els.body.value.trim(), related,
+        created: els.created.value || todayISO(),
+        version: existing ? (Number(existing.version) || 1) + 1 : 1,
+        isEditOfExisting: !!existing,
+      };
+    }
+
+    function toMarkdown(d) {
+      let body = d.body || "";
+      if (d.related.length && !/\[\[/.test(body)) {
+        body += `\n\nRelated: ${d.related.map((r) => `[[${r}]]`).join(", ")}`;
+      }
+      return [
+        "---",
+        `name: ${d.name || "<name>"}`,
+        `description: ${d.description || "<description>"}`,
+        "metadata:",
+        `  type: ${d.type}`,
+        `  practice: ${d.practice || "<practice>"}`,
+        `  source_bot: ${d.source_bot}`,
+        `  origin: ${d.origin}`,
+        `  created: ${d.created}`,
+        `  version: ${d.version}`,
+        "---",
+        body || "<the fact>",
+        "",
+      ].join("\n");
+    }
+    const toIndexLine = (d) =>
+      `- [${d.name || "<name>"}](${d.name || "<name>"}.md) — ${d.description || "<description>"}`;
+
+    function renderPreview() {
+      const d = read();
+      els.preview.textContent = toMarkdown(d);
+      els.indexLine.textContent = toIndexLine(d);
+      els.filePath.textContent = `memory/${d.name || "<name>"}.md`;
+      els.versionNote.textContent = d.isEditOfExisting
+        ? `Existing fact — saving bumps to version ${d.version}.` : "New fact → version 1.";
+
+      if (d.name && d.isEditOfExisting && els.factPicker.value !== d.name) {
+        els.nameWarn.className = "mt-1.5 text-xs text-amber-600";
+        els.nameWarn.innerHTML =
+          `⚠ A fact named <code>${d.name}</code> exists — saving will <b>update</b> it (v${d.version}).`;
+        els.nameWarn.classList.remove("hidden");
+      } else { els.nameWarn.classList.add("hidden"); }
+    }
+
+    function validate(d) {
+      const e = [];
+      if (!d.name) e.push("a slug");
+      else if (!isKebab(d.name)) e.push("a valid kebab-case slug");
+      if (!d.description) e.push("a description");
+      if (!d.body) e.push("the fact body");
+      return e;
+    }
+
+    function showReview() { els.reviewWrap.classList.remove("hidden"); }
+
+    function fill(d) {
+      if (d.description !== undefined) els.description.value = d.description || "";
+      if (d.name !== undefined) { els.name.value = d.name || ""; nameEdited = true; }
+      if (d.type) els.type.value = d.type;
+      if (d.practice !== undefined) els.practice.value = d.practice || "";
+      if (d.source_bot) els.sourceBot.value = d.source_bot;
+      if (d.origin) els.origin.value = d.origin;
+      if (d.body !== undefined) els.body.value = d.body || "";
+      if (d.related) els.related.value = (d.related || []).join(", ");
+      if (d.created) els.created.value = d.created;
+      renderPreview();
+    }
+
+    // ---- network --------------------------------------------------------
+    async function probe() {
+      // extraction server
+      try {
+        const r = await fetch(HEALTH_URL); extractOnline = r.ok;
+      } catch { extractOnline = false; }
+      els.extractPill.textContent = extractOnline ? "extraction ready" : "extraction offline";
+      els.extractPill.className = "text-xs font-medium px-3 py-1.5 rounded-full " +
+        (extractOnline ? "bg-emerald-600 text-white" : "bg-amber-500 text-white");
+      els.extractBtn.disabled = !extractOnline;
+      if (!extractOnline) {
+        els.extractMsg.textContent = "Server not running — fill in manually below.";
+        els.extractMsg.className = "text-sm text-slate-500";
+        showReview();
+      }
+      // memory store
+      try {
+        const r = await fetch(MEMORIES_URL); storeOnline = r.ok;
+        if (storeOnline) facts = await r.json();
+      } catch { storeOnline = false; }
+      if (!storeOnline) facts = SAMPLE;
+      els.storePill.textContent = storeOnline ? "store connected" : "store offline · preview";
+      els.storePill.className = "text-xs font-medium px-3 py-1.5 rounded-full " +
+        (storeOnline ? "bg-emerald-600 text-white" : "bg-amber-500 text-white");
+      populatePicker();
+    }
+
+    async function doExtract() {
+      const text = els.story.value.trim();
+      if (!text) { flash(els.extractMsg, "Type a fact or story first.", "err"); return; }
+      els.extractBtn.disabled = true;
+      flash(els.extractMsg, "Extracting…", "muted");
+      try {
+        const r = await fetch(EXTRACT_URL, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text }),
+        });
+        if (!r.ok) throw new Error("server " + r.status + " " + (await r.text()).slice(0, 120));
+        const d = await r.json();
+        if (!els.created.value) els.created.value = todayISO();
+        els.sourceBot.value = "human"; els.origin.value = "manual";  // human capture via the form
+        fill(d);
+        showReview();
+        flash(els.extractMsg, "Extracted ✓ — review the fields and save.", "ok");
+        els.description.focus();
+      } catch (err) {
+        flash(els.extractMsg, "Extraction failed (" + err.message + "). Fill in manually below.", "err");
+        showReview();
+      } finally { els.extractBtn.disabled = !extractOnline; }
+    }
+
+    async function save(d) {
+      const payload = {
+        name: d.name, description: d.description, type: d.type, practice: d.practice,
+        source_bot: d.source_bot, origin: d.origin, body: d.body, created: d.created, version: d.version,
+      };
+      const r = await fetch(MEMORIES_URL, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+      });
+      if (!r.ok) throw new Error("store responded " + r.status);
+      return r.json().catch(() => ({}));
+    }
+
+    // ---- picker (edit existing) -----------------------------------------
+    function populatePicker() {
+      els.factPicker.innerHTML = '<option value="">— edit existing… —</option>' +
+        facts.map((f) => `<option value="${f.name}">${f.name}</option>`).join("");
+      els.factPicker.classList.toggle("hidden", facts.length === 0);
+    }
+    function loadIntoEdit(name) {
+      const f = findFact(name); if (!f) return;
+      let body = f.body || "", related = [];
+      const m = body.match(/\n+Related:\s*(.+)\s*$/);
+      if (m) { related = (m[1].match(/\[\[([^\]]+)\]\]/g) || []).map((x) => x.replace(/\[\[|\]\]/g, "")); body = body.slice(0, m.index); }
+      fill({ ...f, body: body.trim(), related });
+      els.factPicker.value = name;
+      showReview();
+    }
+
+    // ---- output helpers -------------------------------------------------
+    function download(d) {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([toMarkdown(d)], { type: "text/markdown" }));
+      a.download = `${d.name || "fact"}.md`; a.click(); URL.revokeObjectURL(a.href);
+    }
+    async function copyMarkdown(d) {
+      try { await navigator.clipboard.writeText(toMarkdown(d)); flash(els.formMsg, "Markdown copied ✓", "ok"); }
+      catch { flash(els.formMsg, "Copy failed — select the preview manually", "err"); }
+    }
+    function flash(el, msg, kind) {
+      el.textContent = msg;
+      el.className = "text-sm " + (kind === "ok" ? "text-emerald-600" : kind === "err" ? "text-red-600" : "text-slate-500");
+    }
+    function resetAll() {
+      els.form.reset(); els.story.value = ""; nameEdited = false;
+      els.created.value = todayISO(); els.factPicker.value = "";
+      els.formMsg.textContent = ""; els.extractMsg.textContent = "";
+      renderPreview();
+    }
+
+    // ---- events ---------------------------------------------------------
+    ["input", "change"].forEach((ev) => els.form.addEventListener(ev, renderPreview));
+    els.description.addEventListener("input", () => { if (!nameEdited) els.name.value = slugify(els.description.value); });
+    els.name.addEventListener("input", () => { nameEdited = true; });
+    els.extractBtn.addEventListener("click", doExtract);
+    els.manualBtn.addEventListener("click", () => { showReview(); els.description.focus(); });
+    els.resetBtn.addEventListener("click", resetAll);
+    els.factPicker.addEventListener("change", (e) => e.target.value && loadIntoEdit(e.target.value));
+    els.copyBtn.addEventListener("click", () => copyMarkdown(read()));
+    els.downloadBtn.addEventListener("click", () => download(read()));
+    document.querySelectorAll(".example").forEach((b) =>
+      b.addEventListener("click", () => { els.story.value = EXAMPLES[b.textContent] || ""; els.story.focus(); }));
+
+    els.form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const d = read();
+      const errs = validate(d);
+      if (errs.length) { flash(els.formMsg, "Need " + errs.join(", ") + ".", "err"); return; }
+      els.saveBtn.disabled = true; flash(els.formMsg, "Saving…", "muted");
+      try {
+        await save(d);
+        const i = facts.findIndex((f) => f.name === d.name);
+        const stored = { name: d.name, description: d.description, type: d.type, practice: d.practice,
+          source_bot: d.source_bot, origin: d.origin, created: d.created, version: d.version, body: d.body };
+        if (i >= 0) facts[i] = stored; else facts.push(stored);
+        populatePicker();
+        flash(els.formMsg, `Saved memory/${d.name}.md (v${d.version}) ✓ — refresh the dashboard.`, "ok");
+      } catch (err) {
+        flash(els.formMsg, `Store unavailable (${err.message}). Use Download / Copy to save into memory/ manually.`, "err");
+        download(d);
+      } finally { els.saveBtn.disabled = false; }
+    });
+
+    // ---- inlined fallback sample (matches the /api/memories contract) ----
+    const SAMPLE = [
+      { name: "cra-gap-assessment-template", description: "Where the CRA gap-assessment template lives and who owns it",
+        type: "reference", practice: "Transformation & Security", source_bot: "vally", origin: "conversation",
+        created: "2026-04-22", version: 1,
+        body: "The CRA gap-assessment template for <kunde> engagements is at <path>. Owner: Maya Singh (CISO office). Use it before quoting any CRA-readiness work.\n\nRelated: [[nis2-scoping-checklist]]" },
+      { name: "nis2-scoping-checklist", description: "Checklist for deciding whether a <kunde> engagement falls under NIS2",
+        type: "reference", practice: "Transformation & Security", source_bot: "human", origin: "manual",
+        created: "2026-04-22", version: 2,
+        body: "Run the NIS2 scoping checklist at <path> before scoping compliance work. If sector classification is unclear, ask Maya Singh (CISO office)." },
+      { name: "sap-commerce-integration-expert", description: "Internal go-to for SAP order-management ↔ commerce integration",
+        type: "user", practice: "SAP Core Business Services", source_bot: "vally", origin: "conversation",
+        created: "2026-02-11", version: 1,
+        body: "For SAP order-management ↔ <commerce-platform> integration, the go-to is Marco Reinhardt (SAP Core). Book him early on retail commerce engagements." },
+    ];
+
+    // ---- init -----------------------------------------------------------
+    els.created.value = todayISO();
+    renderPreview();
+    probe();
+  })();
+  </script>
+</body>
+</html>

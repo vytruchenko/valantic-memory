@@ -2,20 +2,17 @@
 
 ## Context
 
-**Goal:** Build a *persistent, vendor-neutral memory / knowledge layer* for valantic that any
-chatbot can read and write — Claude (primary), Copilot, ChatGPT, and the internal **Vally** bot.
+**Goal:** Build valantic's **company brain** — a *persistent, vendor-neutral memory / knowledge layer*
+that any assistant can read and write — Claude (primary), Copilot, ChatGPT, and the internal **Vally**
+bot.
 
-**The headline capability (Tier 1):** the layer must capture what Claude *learns during a
-conversation* — not just facts we pre-load from background documents. When something durable
-surfaces in a chat ("our CRA template moved to `<path>`", "the on-call lead is now `<person>`"),
-Claude distills it into a memory fact and writes it to the store **itself**, the same way the
-`MEMORY.md` protocol works: read the index at session start → recall → write new facts as it
-learns. Next session (or any other bot) recalls it. **Two capture paths, one store:**
-
-- **Conversational capture (Tier 1 — the priority):** Claude proactively writes a fact when a
-  conversation teaches it something worth keeping. This is the differentiator we demo.
-- **Document ingestion (background):** facts extracted from docs we hand it. Useful seed, but
-  secondary — it's the part that already exists in the old managed-memory scripts.
+**The tangible problem (internal delivery & staffing):** valantic delivers transformation end to end —
+strategy, security, SAP, data & AI, customer experience. The hard-won knowledge of *how we deliver*
+(which migration path worked, who the internal expert is, which accelerator to reuse, what we
+under-estimated last time) lives in people's heads and is scattered across four different AI
+assistants with **zero shared memory**. So consultants re-solve solved problems. The company brain
+captures that knowledge once, in any assistant, and makes it reusable by everyone. The golden-thread
+storyline for the live demo is in [`demo-script.md`](./demo-script.md).
 
 **Why the existing repo doesn't get us there:** the current code (`create_agent.py`,
 `run_session_*.py`) is built on Claude's **managed Memory tool** — a cloud store at
@@ -61,8 +58,7 @@ name: cra-gap-assessment-template
 description: Where the CRA gap-assessment template lives and who owns it
 metadata:
   type: reference        # user | feedback | project | reference
-  source_bot: claude     # claude | chatgpt | copilot | vally  ← which bot wrote it
-  origin: conversation   # conversation | document  ← Tier 1 learning vs background ingestion
+  source_bot: claude     # claude | chatgpt | copilot | vally  ← provenance
   created: 2026-06-16
   version: 1
 ---
@@ -129,36 +125,31 @@ and the demo story (which valantic fact gets "taught" live). Then split.
   Tools over the `memory/` dir:
   - `memory_search(query)` — load all `*.md`, rank by keyword overlap on frontmatter
     `description` + body; return top matches. (Keep it simple — no embeddings unless time.)
-  - `memory_write(name, description, type, body, source_bot, origin)` — write/overwrite the fact
-    file (bump `version` if it exists) and update `MEMORY.md`. Stamp `created` from a passed-in
-    date (avoid runtime clock issues). `origin` records whether the fact came from a conversation
-    (Tier 1) or a document.
+  - `memory_write(name, description, type, body, source_bot)` — write/overwrite the fact file
+    (bump `version` if it exists) and update `MEMORY.md`. Stamp `created` from a passed-in date
+    (avoid runtime clock issues).
   - `memory_list()` and `memory_get(name)`.
 - Transport: **stdio** (no hosting needed for the live Claude demo).
-- Seed `memory/` with ~6–8 sanitized valantic facts (CRA/NIS2/IEC 62443 references, onboarding,
-  team pointers). Fallback content already in repo: `synthetic-data/round1/` if we run short on real content.
+- `memory/` is **already seeded** with 8 sanitized valantic delivery facts spanning every practice
+  area (SAP, Strategy & Transformation, Transformation & Security, Data & AI, Customer Experience) and
+  every assistant as provenance (`claude`/`copilot`/`chatgpt`/`vally`/`human`), plus `MEMORY.md`. These
+  are the cards the dashboard shows in the demo; `web/sample-memories.json` mirrors them for frontend
+  dev. The **one fact written live** in the demo (`sap-order-integration-peak-sizing`) is intentionally
+  *not* seeded — Claude writes it on stage. Reshape the source docs in `synthetic-data/round1`–`round2`
+  if you want to regenerate seeds.
 - Set aside (do not delete) the managed-memory scripts — out of scope for the portable layer.
 
-### Layer 2 — Wire into Claude LIVE + the capture protocol (Jenny)
+### Layer 2 — Wire into Claude LIVE (Jenny)
 - Add the server to Claude Code via `.mcp.json` in the project root (or Claude Desktop's
-  `claude_desktop_config.json`). Verify the `memory_*` tools appear.
-- **The Tier-1 enabler — a memory protocol in the instructions** (`CLAUDE.md` for Claude Code,
-  or the system prompt). This is what makes capture *autonomous* instead of manual. Mirror the
-  proven `MEMORY.md` pattern:
-  1. *At session start:* call `memory_search`/`memory_list` and skim `MEMORY.md` before answering.
-  2. *During the chat:* when something durable surfaces (a policy, a location, an owner, a
-     decision), call `memory_write` with `origin: conversation` — without being told to.
-  3. *On contradiction:* UPDATE the existing fact (bump `version`), don't append a duplicate.
-- Validate end-to-end: have a real back-and-forth, let Claude **decide on its own** to write a
-  fact → confirm a new `memory/*.md` (with `origin: conversation`) and a new `MEMORY.md` line.
+  `claude_desktop_config.json`). Verify tools appear, then **teach it a fact in chat** →
+  confirm a new file lands in `memory/`.
 
 ### Layer 3 — REST + Dashboard (Julian, Maike)
 - **New** `serve_api.py` (FastAPI or stdlib `http.server`) — read-only `GET /api/memories`
   returning the JSON contract above. Decouples the frontend from MCP internals.
 - Dashboard (their stack of choice — Vite/React, or zero-build HTML + Tailwind CDN for speed):
-  card grid, search, filter by `type`, `source_bot`, and **`origin`** (conversation vs document),
-  **provenance badge per card** (claude/chatgpt/copilot/vally) plus a "learned from chat" badge
-  for `origin: conversation`, and a flag when two facts share a `name`/topic (contradiction).
+  card grid, search, filter by `type` and `source_bot`, **provenance badge per card**
+  (claude/chatgpt/copilot/vally), and a flag when two facts share a `name`/topic (contradiction).
 - "Add fact" form POSTs to the same store — proves humans + any bot edit one source of truth.
 
 ### The cross-bot moment (Maike)
@@ -170,25 +161,31 @@ and the demo story (which valantic fact gets "taught" live). Then split.
 
 ---
 
-## Demo script (3 min) — Tier 1 is the star
-1. Show the dashboard with a few seeded cards — "valantic's shared knowledge layer."
-2. Have a **natural conversation** with Claude about a CRA/NIS2 topic and casually drop a durable
-   fact ("we just moved the gap-assessment template to `<path>`"). **Don't tell it to save** —
-   the memory protocol makes Claude decide to call `memory_write` (`origin: conversation`) itself.
-   *This is the wow: it learns from the chat, not from a document we fed it.*
-3. Refresh dashboard → new card appears, badges **"taught by Claude"** + **"from conversation."**
-4. Point to the pre-seeded `chatgpt`/`vally` cards: "same store, any bot — one MCP server."
-5. Open a **fresh Claude session**, ask about that template → it recalls the fact from memory.
-   **Persistent across sessions.** (Optional: edit a fact in the dashboard → Claude reflects the edit.)
-6. Close on the config diagram: Copilot/ChatGPT/Vally = config, not rebuild.
+## Demo script (3 min) — golden thread
+
+Full presenter version with exact lines in [`demo-script.md`](./demo-script.md). The beats:
+
+1. **Frame the pain (one slide):** four assistants across the firm, zero shared memory, every
+   project's lessons die in a project channel. Show the populated dashboard — "valantic's company brain."
+2. **Recall —** *Lena* is scoping an S/4HANA + commerce retail engagement. In **Claude** she asks
+   "has valantic done this before, who do I pull in, what can I reuse?" → `memory_search` returns three
+   colleagues' past-engagement facts (brownfield playbook, the integration expert, the estimate
+   contingency). *Knowledge she'd otherwise spend days chasing.*
+3. **Capture —** she tells Claude to remember a new lesson (size SAP order-integration for peak load).
+   → `memory_write`. Refresh dashboard → new card, badge **"taught by Claude,"** by Lena.
+4. **Cross-bot —** point to seeded cards from **Copilot / ChatGPT / Vally**: "four assistants, one
+   brain — vendor-neutral by design."
+5. **Govern —** a lead edits the `sap-commerce-integration-expert` card (post-re-org: Marco → Priya);
+   a fresh Claude session recalls Priya. **Persistent, shared, governed.**
+6. **Close —** config diagram: Copilot/ChatGPT/Vally = config, not rebuild. "Every engagement,
+   captured once, reusable by everyone, through whatever assistant they already use."
 
 ---
 
 ## Verification
-- **Tier-1 capture (the key test):** in a normal chat, mention a durable fact *without asking it
-  to save*. Confirm Claude calls `memory_write` on its own and a new `memory/*.md` lands with
-  `origin: conversation` + a new `MEMORY.md` line.
-- **Recall across sessions:** open a fresh Claude session → `memory_search` returns that fact.
+- **MCP live:** in Claude, run a prompt that triggers `memory_write`; confirm a new `memory/*.md`
+  file with correct frontmatter, and a new line in `MEMORY.md`.
+- **Recall:** new Claude session → `memory_search` returns the seeded/written fact.
 - **Dashboard:** `GET /api/memories` returns all facts; cards render with correct
   `source_bot` badges; filter + search work; human-added fact appears in the store on disk.
 - **Round-trip:** human edits a fact in dashboard → Claude session reflects the edit.

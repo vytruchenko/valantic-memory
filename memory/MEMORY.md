@@ -1,10 +1,13 @@
-# MEMORY.md — valantic Knowledge Layer index
+# valantic Company Brain — index
 
-- [cra-gap-assessment-template](cra-gap-assessment-template.md) — Where the CRA gap-assessment template lives and who owns it `[reference/claude/document]`
-- [iec-62443-ot-baseline](iec-62443-ot-baseline.md) — Default reference standard for OT/ICS security assessments `[reference/claude/document]`
-- [incident-comms-channel](incident-comms-channel.md) — Where P1 incident communication happens and the first escalation step `[project/vally/document]`
-- [new-hire-onboarding-pointers](new-hire-onboarding-pointers.md) — First-week pointers for a new engineering hire `[reference/claude/document]`
-- [nis2-scope-checklist](nis2-scope-checklist.md) — How we determine whether a <kunde> engagement falls under NIS2 `[reference/claude/conversation]`
-- [on-call-rotation-owner](on-call-rotation-owner.md) — Who owns the SRE on-call rotation and what the on-call lead handles `[project/claude/document]`
-- [prod-access-request-flow](prod-access-request-flow.md) — Standard read-only production access request process and SLA `[project/claude/document]`
-- [vs-nfd-classification-contact](vs-nfd-classification-contact.md) — Who to contact for VS-NFD / Verschlusssachen classification questions `[reference/chatgpt/document]`
+One line per fact. The lightweight recall layer; the full fact lives in the matching `*.md` file.
+Any assistant (Claude · Copilot · ChatGPT · Vally) reads and writes this store through the MCP server.
+
+- s4hana-brownfield-vs-greenfield-playbook — Brownfield-vs-greenfield S/4HANA call for mid-size retail + the reusable assessment kit (SAP · claude)
+- transformation-estimation-heuristics — Contingency & day-rate heuristics for end-to-end scoping (Strategy & Transformation · copilot)
+- cra-gap-assessment-template — Where the CRA gap-assessment template lives and who owns it (Transformation & Security · vally)
+- nis2-scoping-checklist — Checklist for whether a <kunde> engagement falls under NIS2 (Transformation & Security · human)
+- commerce-ux-research-kit — Reusable UX discovery/research kit for commerce & CX work (Customer Experience · chatgpt)
+- data-platform-reference-architecture — valantic reference architecture/accelerator for a client data platform (Data & AI · claude)
+- sap-commerce-integration-expert — Internal go-to for SAP ↔ commerce order-integration (SAP · vally)
+- engagement-retro-process — How lessons learned get captured into the brain after each engagement (Strategy & Transformation · human)
