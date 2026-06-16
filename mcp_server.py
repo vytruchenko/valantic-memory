@@ -37,7 +37,33 @@ VALID_TYPES = {"user", "feedback", "project", "reference"}
 VALID_BOTS = {"claude", "chatgpt", "copilot", "vally"}
 VALID_ORIGINS = {"conversation", "document"}
 
-mcp = FastMCP("valantic-knowledge-layer")
+# The capture protocol travels WITH the server (not in a vendor file like CLAUDE.md),
+# so any MCP client — Claude Desktop, Claude Code, ChatGPT, Vally — receives it on
+# connect, with zero per-user setup. Clients that surface server `instructions` inject
+# this near system-prompt level; the imperative tool descriptions below reinforce it
+# even for clients that don't.
+PROTOCOL = """\
+You are connected to the valantic Knowledge Layer — a shared, persistent, vendor-neutral
+memory store. Treat it as your long-term memory and follow this protocol on EVERY conversation,
+without being asked:
+
+1. RECALL FIRST. Before answering a substantive question, call `memory_search` with the topic
+   (or `memory_list`). Ground your answer in what the store already knows.
+
+2. CAPTURE PROACTIVELY (the priority). The moment something DURABLE surfaces in the chat — a
+   policy, a file/template location, an owner, a decision, a process change — you MUST call
+   `memory_write` with origin="conversation", on your own initiative. Do not wait to be told.
+   If unsure whether it's worth keeping, keep it.
+
+3. UPDATE, DON'T DUPLICATE. If a new fact contradicts an existing one, call `memory_write` with
+   the SAME name to bump its version. Never write a second fact on the same topic.
+
+GUARDRAILS (override convenience): Sanitize everything to placeholders — <kunde>, <host>,
+<secret>, <person>, <path>. Never store customer names, production IPs, or secrets. For binding
+compliance interpretation (CRA, NIS2, IEC 62443 for OT/ICS) defer to the CISO; for Geheimschutz /
+VS-NFD classification defer to the Sicherheitsbeauftragter (SiBe)."""
+
+mcp = FastMCP("valantic-knowledge-layer", instructions=PROTOCOL)
 
 
 # --- Fact file parsing / writing -----------------------------------------
@@ -111,7 +137,8 @@ def _rebuild_index() -> None:
 def memory_search(query: str) -> list[dict[str, Any]]:
     """Recall facts by keyword overlap on description + body. Returns ranked matches.
 
-    Call this at the start of a session and whenever a topic might already be known.
+    CALL THIS FIRST — at the start of a conversation and before answering any substantive
+    question — so your answer is grounded in what the shared memory layer already knows.
     """
     terms = {t for t in re.findall(r"[a-z0-9]+", query.lower()) if len(t) > 2}
     scored = []
@@ -135,11 +162,15 @@ def memory_write(
     origin: str = "conversation",
     created: str = "",
 ) -> dict[str, Any]:
-    """Create or update a fact. Bumps version if it already exists; rebuilds the index.
+    """Persist a durable fact to the shared memory layer. CALL THIS PROACTIVELY, without being
+    asked, whenever a conversation reveals something worth keeping — a policy, a location, an
+    owner, a decision, a process change. This is the priority behavior: capture beats asking.
 
-    Use origin='conversation' for things learned mid-chat (Tier 1), 'document' for
-    facts ingested from background docs. Pass `created` (YYYY-MM-DD) to avoid clock issues.
-    On a contradiction, UPDATE the existing fact (same name) rather than appending a duplicate.
+    Use origin='conversation' for things learned mid-chat (Tier 1 — the differentiator),
+    'document' for facts ingested from background docs. Pass `created` (YYYY-MM-DD) to avoid
+    clock issues. On a contradiction, UPDATE the existing fact (same `name`, version auto-bumps)
+    rather than appending a duplicate. Sanitize to placeholders — never store real customer
+    names, production IPs, or secrets.
     """
     if type not in VALID_TYPES:
         type = "reference"
