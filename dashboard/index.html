@@ -111,6 +111,34 @@
     <div id="empty" class="hidden text-center text-gray-400 py-24 text-sm">No facts match your filters.</div>
   </main>
 
+  <!-- Modal -->
+  <div id="modal-backdrop" onclick="closeModal()" style="display:none;position:fixed;inset:0;background:rgba(30,26,46,.45);z-index:50;backdrop-filter:blur(2px)"></div>
+  <div id="modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:51;width:min(640px,92vw);max-height:85vh;background:white;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.18);display:none;flex-direction:column;overflow:hidden">
+
+    <!-- Modal header -->
+    <div style="padding:24px 28px 20px;border-bottom:1px solid #F3F4F6;display:flex;align-items:flex-start;gap:16px">
+      <div style="flex:1;min-width:0">
+        <div id="modal-badges" style="display:flex;align-items:center;gap:8px;margin-bottom:10px"></div>
+        <h2 id="modal-title" style="font-size:18px;font-weight:700;color:#332F49;line-height:1.35;margin:0"></h2>
+      </div>
+      <button onclick="closeModal()" style="flex-shrink:0;width:32px;height:32px;border-radius:8px;border:1px solid #E5E7EB;background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#9CA3AF;transition:background .15s" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background='white'">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Modal body -->
+    <div style="padding:24px 28px;overflow-y:auto;flex:1">
+      <p id="modal-body" style="font-size:14px;color:#374151;line-height:1.75;margin:0 0 24px"></p>
+
+      <!-- Metadata table -->
+      <div style="border:1px solid #F3F4F6;border-radius:10px;overflow:hidden">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <tbody id="modal-meta"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <style>
     .chip {
       padding: 5px 14px;
@@ -264,9 +292,9 @@
       const bot      = BOT_STYLE[f.source_bot] || { bg: 'background:#F3F4F6;color:#374151', dot: 'background:#9CA3AF', label: f.source_bot };
       const typeStyle = TYPE_STYLE[f.type] || 'background:#F3F4F6;color:#374151';
       const snippet  = f.body.length > 130 ? f.body.slice(0, 130) + '…' : f.body;
-      const linked   = esc(snippet).replace(/\[\[([^\]]+)\]\]/g, '<span style="color:#FF604D;font-style:italic">[[&ZeroWidthSpace;$1]]</span>');
+      const linked   = esc(snippet).replace(/\[\[([^\]]+)\]\]/g, '<span style="color:#FF604D;font-style:italic">$1</span>');
 
-      return `<div style="background:white;border-radius:12px;border:1px solid #E5E7EB;box-shadow:0 1px 3px rgba(0,0,0,.06);padding:24px;display:flex;flex-direction:column;gap:16px;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,.10)';this.style.borderColor='#FBBCB5'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,.06)';this.style.borderColor='#E5E7EB'">
+      return `<div onclick="openModal('${esc(f.name)}')" style="cursor:pointer;background:white;border-radius:12px;border:1px solid #E5E7EB;box-shadow:0 1px 3px rgba(0,0,0,.06);padding:24px;display:flex;flex-direction:column;gap:16px;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,.10)';this.style.borderColor='#FBBCB5'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,.06)';this.style.borderColor='#E5E7EB'">
 
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
           <span class="badge-type" style="${typeStyle}">${esc(f.type)}</span>
@@ -306,6 +334,54 @@
         render();
       });
     });
+
+    // ── Modal ────────────────────────────────────────────────────────────────
+    function openModal(name) {
+      const f = allFacts.find(x => x.name === name);
+      if (!f) return;
+
+      const bot       = BOT_STYLE[f.source_bot] || { bg: 'background:#F3F4F6;color:#374151', dot: 'background:#9CA3AF', label: f.source_bot };
+      const typeStyle = TYPE_STYLE[f.type] || 'background:#F3F4F6;color:#374151';
+
+      document.getElementById('modal-title').textContent = f.description;
+
+      document.getElementById('modal-badges').innerHTML = `
+        <span class="badge-type" style="${typeStyle}">${esc(f.type)}</span>
+        <span class="badge-bot" style="${bot.bg}">
+          <span style="width:7px;height:7px;border-radius:50%;${bot.dot};flex-shrink:0"></span>
+          ${bot.label}
+        </span>`;
+
+      // Full body with [[links]] as clickable buttons
+      const bodyLinked = esc(f.body).replace(/\[\[([^\]]+)\]\]/g, (_, link) =>
+        `<button onclick="event.stopPropagation();openModal('${link}')" style="color:#FF604D;font-style:italic;font-weight:600;background:none;border:none;cursor:pointer;padding:0;font-size:inherit;font-family:inherit">${link}</button>`
+      );
+      document.getElementById('modal-body').innerHTML = bodyLinked;
+
+      const metaRows = [
+        ['Name',    `<span style="font-family:ui-monospace,monospace">${esc(f.name)}</span>`],
+        ['Created', esc(f.created)],
+        ['Version', `v${f.version}`],
+        ['Source',  bot.label],
+        ['Type',    `<span class="badge-type" style="${typeStyle}">${esc(f.type)}</span>`],
+      ];
+      document.getElementById('modal-meta').innerHTML = metaRows.map(([k, v], i) => `
+        <tr style="border-top:${i > 0 ? '1px solid #F9FAFB' : 'none'}">
+          <td style="padding:10px 16px;color:#9CA3AF;font-weight:500;white-space:nowrap;width:90px">${k}</td>
+          <td style="padding:10px 16px;color:#332F49">${v}</td>
+        </tr>`).join('');
+
+      document.getElementById('modal-backdrop').style.display = 'block';
+      const modal = document.getElementById('modal');
+      modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('modal-backdrop').style.display = 'none';
+      document.getElementById('modal').style.display = 'none';
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
     loadFacts();
   </script>
