@@ -39,7 +39,7 @@ except Exception:
 
 from anthropic import Anthropic
 
-MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5")  # fast + cheap for extraction
+MODEL = os.environ.get("EXTRACT_MODEL", "claude-haiku-4-5")  # fast + cheap; own var, not the agent's ANTHROPIC_MODEL
 HOST = os.environ.get("EXTRACT_HOST", "127.0.0.1")
 PORT = int(os.environ.get("EXTRACT_PORT", "8788"))
 
@@ -89,11 +89,18 @@ SCHEMA = {
     "additionalProperties": False,
 }
 
-_client = Anthropic()  # reads ANTHROPIC_API_KEY from env / .env
+_client = None
+
+
+def _get_client() -> Anthropic:
+    global _client
+    if _client is None:
+        _client = Anthropic()  # reads ANTHROPIC_API_KEY from env / .env
+    return _client
 
 
 def extract(text: str) -> dict:
-    resp = _client.messages.create(
+    resp = _get_client().messages.create(
         model=MODEL,
         max_tokens=1024,
         system=SYSTEM,

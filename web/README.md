@@ -1,69 +1,94 @@
-# Add / Edit Fact form (Maike)
+# Capture-a-Fact form (Maike)
 
-A zero-build, single-file form for **humans to add or correct facts** in the vendor-neutral
-knowledge store — the "humans + any bot edit one source of truth" path from [`../PLAN.md`](../PLAN.md).
+A zero-build form for **humans to add or correct facts** in the vendor-neutral
+knowledge store — the "humans + any bot edit one source of truth" path from
+[`../PLAN.md`](../PLAN.md). You **tell it a fact in plain language**; Claude
+extracts the structured fields; you review and save.
 
 ## Files
 
-| File                   | What it is                                                        |
-|------------------------|-------------------------------------------------------------------|
-| `add-fact.html`        | The form. Open it directly or serve it — no build step.           |
-| `sample-memories.json` | Mock data matching the `GET /api/memories` contract. Julian can reuse this for the dashboard. |
+| File                   | What it is                                                            |
+|------------------------|-----------------------------------------------------------------------|
+| `add-fact.html`        | The form — zero-build, single file. Open directly or serve it.        |
+| `extract_server.py`    | Local backend: `POST /api/extract` → Claude → structured fields. Keeps the API key server-side. |
+| `sample-memories.json` | Mock matching the `GET /api/memories` contract (Julian can reuse).    |
 
 ## Run it
 
 ```bash
-# simplest: just open it
-open web/add-fact.html
+# 1. extraction server (key stays here, never in the browser)
+cd web
+cp ../.env.example ../.env          # then put your key in ../.env
+../.venv/bin/python extract_server.py   # http://127.0.0.1:8788
 
-# or serve (needed for the real API + clean fetch of sample data)
-python3 -m http.server 5500 --directory web   # then visit http://127.0.0.1:5500/add-fact.html
+# 2. the form — open directly, or serve for clean cross-origin fetch
+open add-fact.html
+# or:  python3 -m http.server 5500   →  http://127.0.0.1:5500/add-fact.html
 ```
 
-The form probes `http://127.0.0.1:8787/api/memories` (from `.env.example`: `API_HOST`/`API_PORT`).
-- **API up** → green pill, loads real facts, `Save` POSTs to the store.
-- **API down** → amber "preview mode": still fully usable; `Save` falls back to **Download .md** /
-  **Copy markdown** so nothing is lost, and you can drop the file into `memory/` by hand.
-- Override the endpoint with `?api=http://host:port`.
+Two status pills (top-right):
+- **extraction ready / offline** — is `extract_server.py` up? Offline ⇒ ✨ button
+  disabled, manual entry still works.
+- **store connected / offline** — is Jenny's `serve_api.py` up? Offline ⇒ Save
+  falls back to **Download .md** / **Copy markdown** so nothing is lost.
 
-## What it does
+Endpoint overrides: `?extract=http://host:port` and `?api=http://host:port`.
 
-- **Add / Edit modes.** Edit loads an existing fact, locks the `name` (it's the identity), and
-  **bumps `version`** on save. Typing an existing name in Add mode flags the collision.
-- **Title → auto-slug** `name` (editable). Live preview of the exact `memory/<name>.md` file and
-  the `MEMORY.md` index line it appends.
-- **Schema fields** per `PLAN.md`: `name`, `description`, `metadata.{type, source_bot, origin,
-  created, version}`, body with `[[related]]` links.
-- **Validation**: required title/description/body, kebab-case slug.
+## The flow
 
-## ⚠️ Two shared-contract values to confirm with the team
+1. **Type a fact or mini-story** in the big box (placeholders for anything sensitive).
+2. **✨ Extract fields** → Claude returns `name` slug, `description`, `type`,
+   `practice`, `body`, and `related[]`; the review fields fill in.
+3. **Review & save** — glance, tweak, hit Save. `source_bot`/`origin` default to
+   `human`/`manual` for form capture (editable). Editing an existing slug bumps `version`.
+4. Live preview shows the exact `memory/<name>.md` file and the `MEMORY.md` line.
 
-The form needs to represent **human curation**, which doesn't fit the bot/origin enums. It adds:
+## Extraction (`extract_server.py`)
 
-- `source_bot: **human**`  (alongside claude | chatgpt | copilot | vally)
-- `origin: **manual**`      (alongside conversation | document)
+- **Model: Claude Haiku 4.5** (`claude-haiku-4-5`) — fast + cheap; ~a fraction of a
+  cent per fact. One-line swap via `EXTRACT_MODEL` (its own var, independent of
+  the agent's `ANTHROPIC_MODEL`) to Sonnet 4.6 / Opus 4.8 if quality needs it.
+- **Structured outputs** (`output_config.format` + JSON schema, enums for `type`) —
+  the response is guaranteed schema-valid; no parsing or repair.
+- **Key stays server-side.** The form never holds an API key. (The API *can* be
+  called from the browser with `anthropic-dangerous-direct-browser-access`, but
+  that exposes the key — not used here.)
+- Standalone for the demo; the handler folds cleanly into Jenny's `serve_api.py`.
 
-Both are 1-value extensions to the frozen schema. **Quick OK needed** so the dashboard badges and
-`memory_write` agree. If rejected, they're one-line changes in the two `<select>`s.
+## Schema fields
+
+Per `PLAN.md` + the upgraded sample data: `name`, `description`, and under
+`metadata`: `type`, **`practice`** (valantic practice area — SAP Core Business
+Services, Strategy & Transformation, Transformation & Security, Customer
+Experience, Data & AI, …), `source_bot`, `origin`, `created`, `version`. Body
+carries `[[related]]` links.
+
+## ⚠️ Shared-contract values to confirm with the team
+
+The form represents **human curation**, which doesn't fit the bot/origin enums:
+
+- `source_bot: **human**` (alongside claude | chatgpt | copilot | vally)
+- `origin: **manual**` (alongside conversation | document)
+
+Both are 1-value enum extensions — quick OK needed so badges + `memory_write` agree.
 
 ## 🔧 Write route needed from Jenny (`serve_api.py`)
 
-`serve_api.py` is currently read-only `GET`. The form needs a write route:
+`serve_api.py` is read-only `GET`. The form needs:
 
 ```
 POST /api/memories
 Content-Type: application/json
 
-{ "name", "description", "type", "source_bot", "origin", "body", "created", "version" }
+{ "name", "description", "type", "practice", "source_bot", "origin", "body", "created", "version" }
 ```
 
-Behavior: write/overwrite `memory/<name>.md` with the frontmatter above, bump `version` if it
-exists, append/update the `MEMORY.md` line. Return 2xx (the saved fact, or `{ "ok": true }`).
-This is the same operation as the MCP `memory_write` tool — ideally share that code path.
-
+Write/overwrite `memory/<name>.md` with the frontmatter above (note `practice`
+under `metadata`), bump `version` if it exists, update the `MEMORY.md` line,
+return 2xx. Same operation as the MCP `memory_write` tool — ideally one code path.
 Until it exists, the form's offline fallback keeps the demo working.
 
 ## Branding
 
-Palette is approximate valantic magenta — see `tailwind.config` at the top of `add-fact.html`.
-Swap the `brand` hexes for the exact brand values when available.
+Palette is approximate valantic magenta — see `tailwind.config` at the top of
+`add-fact.html`. Swap the `brand` hexes for the exact brand values.
