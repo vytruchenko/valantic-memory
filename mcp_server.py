@@ -34,8 +34,9 @@ MEMORY_DIR = Path(__file__).parent / "memory"
 INDEX_FILE = MEMORY_DIR / "MEMORY.md"
 
 VALID_TYPES = {"user", "feedback", "project", "reference"}
-VALID_BOTS = {"claude", "chatgpt", "copilot", "vally"}
-VALID_ORIGINS = {"conversation", "document"}
+# "human" = a person curating via the add-fact form; "manual" = same, for origin.
+VALID_BOTS = {"claude", "chatgpt", "copilot", "vally", "human"}
+VALID_ORIGINS = {"conversation", "document", "manual"}
 
 # The capture protocol travels WITH the server (not in a vendor file like CLAUDE.md),
 # so any MCP client — Claude Desktop, Claude Code, ChatGPT, Vally — receives it on
@@ -96,6 +97,7 @@ def _flatten(fact: dict[str, Any]) -> dict[str, Any]:
         "name": fact["name"],
         "description": fm.get("description", ""),
         "type": meta.get("type", "reference"),
+        "practice": meta.get("practice", ""),
         "source_bot": meta.get("source_bot", "claude"),
         "origin": meta.get("origin", "document"),
         "created": str(meta.get("created", "")),
@@ -119,14 +121,24 @@ def _all_facts() -> list[dict[str, Any]]:
 
 
 def _rebuild_index() -> None:
-    """Regenerate MEMORY.md — one line per fact, the lightweight recall layer."""
+    """Regenerate MEMORY.md — the lightweight recall layer, one line per fact.
+
+    Machine-generated from the fact frontmatter so any bot's write keeps it current.
+    Format mirrors the valantic Company Brain style: `name — description (Practice · bot)`.
+    """
     MEMORY_DIR.mkdir(parents=True, exist_ok=True)
-    lines = ["# MEMORY.md — valantic Knowledge Layer index", ""]
+    lines = [
+        "# valantic Company Brain — index",
+        "",
+        "One line per fact. The lightweight recall layer; the full fact lives in the matching `*.md` file.",
+        "Any assistant (Claude · Copilot · ChatGPT · Vally) reads and writes this store through the MCP server.",
+        "",
+    ]
     for fact in _all_facts():
         flat = _flatten(fact)
+        practice = flat["practice"] or flat["type"]
         lines.append(
-            f"- [{flat['name']}]({flat['name']}.md) — {flat['description']} "
-            f"`[{flat['type']}/{flat['source_bot']}/{flat['origin']}]`"
+            f"- {flat['name']} — {flat['description']} ({practice} · {flat['source_bot']})"
         )
     INDEX_FILE.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -161,6 +173,7 @@ def memory_write(
     source_bot: str = "claude",
     origin: str = "conversation",
     created: str = "",
+    practice: str = "",
 ) -> dict[str, Any]:
     """Persist a durable fact to the shared memory layer. CALL THIS PROACTIVELY, without being
     asked, whenever a conversation reveals something worth keeping — a policy, a location, an
@@ -195,6 +208,7 @@ def memory_write(
         "description": description,
         "metadata": {
             "type": type,
+            "practice": practice,
             "source_bot": source_bot,
             "origin": origin,
             "created": created,
