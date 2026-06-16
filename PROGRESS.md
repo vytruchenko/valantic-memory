@@ -70,12 +70,17 @@ contract, and index; backfilled `practice` into all 8 facts (it had only lived i
 - **Shared Claude access:** once `/mcp` is remote (HTTP), Jenny's and Maike's Claude Desktop
   (and Vally/ChatGPT) add the **same Azure `/mcp` URL** as a custom connector → one shared brain.
 
-### Code changes still needed for Azure (small)
-1. MCP server: add **Streamable-HTTP transport** option (`streamable_http_app()` is available)
-   alongside the local stdio mode.
-2. Single deployable that mounts `/mcp` (FastMCP) + `/api/memories` (REST) under one ASGI app
-   (uvicorn). `MEMORY_DIR` already reads from env.
-3. `DEPLOY.md` with the `az` steps + how each person adds the connector to Claude Desktop.
+### Deploy-ready — DONE
+- **[app.py](app.py)** — one ASGI app (FastMCP `streamable_http_app()` + REST routes + open CORS)
+  serving `/mcp` (remote MCP for Claude/Vally/ChatGPT) and `/api/memories` (for the Vercel
+  frontends) together. `MEMORY_DIR` from env. Run: `uvicorn app:app --port 8787`.
+  Verified locally: REST GET/POST work, and the `/mcp` `initialize` handshake returns over HTTP
+  (200 + session id + the Tier-1 `instructions`) — exactly what Claude Desktop connects to.
+- **[DEPLOY.md](DEPLOY.md)** — `az` CLI steps (App Service + Azure Files mount + startup command),
+  Vercel frontend repointing, and the Claude Desktop custom-connector setup for each person
+  (native connector, or the `mcp-remote` bridge). Plus a cloudflared-tunnel quick option.
+
+Remaining = the actual deploy (run the `az` commands) + repoint the two frontends at the Azure URL.
 
 ## Environment note
 System Python is 3.9 (too old for the `mcp` SDK, needs 3.10+). Created a `.venv` via `uv`
