@@ -54,7 +54,11 @@
     <!-- Coral accent pill (right side) -->
     <div class="ml-auto flex items-center gap-3 pr-2">
       <span class="text-xs text-gray-400" id="last-updated"></span>
-      <span class="bg-valantic-coral text-white text-xs font-semibold px-3 py-1 rounded-full">BETA</span>
+      <button id="add-fact-btn" class="bg-valantic-coral text-white text-sm font-semibold pl-3 pr-4 py-2 rounded-lg hover:bg-[#e0432f] transition-colors flex items-center gap-1.5">
+        <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 5v14M5 12h14"/></svg>
+        Add fact
+      </button>
+      <span class="border border-gray-300 text-gray-400 text-xs font-semibold px-3 py-1 rounded-full">BETA</span>
     </div>
   </header>
 
@@ -91,6 +95,7 @@
       <button data-filter="bot" data-value="chatgpt"   class="chip">ChatGPT</button>
       <button data-filter="bot" data-value="copilot"   class="chip">Copilot</button>
       <button data-filter="bot" data-value="vally"     class="chip">Vally</button>
+      <button data-filter="bot" data-value="human"     class="chip">Human</button>
     </div>
 
     <div class="ml-auto text-sm text-gray-400 shrink-0 tabular-nums" id="count-label"></div>
@@ -121,6 +126,10 @@
         <div id="modal-badges" style="display:flex;align-items:center;gap:8px;margin-bottom:10px"></div>
         <h2 id="modal-title" style="font-size:18px;font-weight:700;color:#332F49;line-height:1.35;margin:0"></h2>
       </div>
+      <button id="detail-edit-btn" onclick="editCurrent()" style="flex-shrink:0;height:32px;padding:0 12px;border-radius:8px;border:1px solid #E5E7EB;background:white;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:#332F49;font-size:13px;font-weight:600;transition:all .15s" onmouseover="this.style.borderColor='#FF604D';this.style.color='#FF604D'" onmouseout="this.style.borderColor='#E5E7EB';this.style.color='#332F49'">
+        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        Edit
+      </button>
       <button onclick="closeModal()" style="flex-shrink:0;width:32px;height:32px;border-radius:8px;border:1px solid #E5E7EB;background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#9CA3AF;transition:background .15s" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background='white'">
         <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
@@ -138,6 +147,108 @@
       </div>
     </div>
   </div>
+
+  <!-- Add / Edit fact modal (Maike) -->
+  <div id="form-backdrop" onclick="closeFactForm()" style="display:none;position:fixed;inset:0;background:rgba(30,26,46,.45);z-index:60;backdrop-filter:blur(2px)"></div>
+  <div id="form-modal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:61;width:min(680px,94vw);max-height:90vh;background:white;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.18);flex-direction:column;overflow:hidden">
+
+    <div class="flex items-start gap-3" style="padding:22px 28px 16px;border-bottom:1px solid #F3F4F6">
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2">
+          <span class="text-valantic-coral">✦</span>
+          <h2 id="ff-title" class="text-lg font-bold text-valantic-dark leading-tight">Add a fact</h2>
+        </div>
+        <div class="text-xs text-gray-400 mt-0.5">Tell it in plain language — Claude extracts the fields.</div>
+      </div>
+      <span id="ff-extract-pill" class="text-[11px] font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-500 shrink-0 self-center">extraction…</span>
+      <button onclick="closeFactForm()" style="flex-shrink:0;width:32px;height:32px;border-radius:8px;border:1px solid #E5E7EB;background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#9CA3AF;transition:background .15s" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background='white'">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div style="padding:20px 28px;overflow-y:auto" class="space-y-4">
+      <div id="ff-story-section">
+        <textarea id="ff-story" rows="3" class="ff-input" placeholder="e.g. We just moved the CRA gap-assessment template to the compliance share, and Maya in the CISO office owns it now."></textarea>
+        <div class="mt-2 flex flex-wrap gap-1.5 items-center">
+          <span class="text-[11px] text-gray-400 mr-0.5">try:</span>
+          <button type="button" class="ff-example chip" style="font-size:11px;padding:3px 10px">CRA template moved</button>
+          <button type="button" class="ff-example chip" style="font-size:11px;padding:3px 10px">go-to SAP integration expert</button>
+          <button type="button" class="ff-example chip" style="font-size:11px;padding:3px 10px">estimation rule of thumb</button>
+        </div>
+        <div class="mt-3 flex flex-wrap items-center gap-3">
+          <button id="ff-extract-btn" type="button" class="bg-valantic-coral text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#e0432f] transition-colors disabled:opacity-50">✨ Extract fields</button>
+          <button id="ff-manual-btn" type="button" class="text-sm text-gray-500 hover:text-valantic-coral transition-colors">or fill in manually</button>
+          <span id="ff-extract-msg" class="text-sm"></span>
+        </div>
+        <div style="border-top:1px solid #F3F4F6;margin-top:18px"></div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-valantic-dark mb-1">Description <span class="text-valantic-coral">*</span></label>
+        <input id="ff-description" type="text" maxlength="180" class="ff-input" placeholder="One line — the recall hook" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-valantic-dark mb-1">Slug (file name) <span class="text-valantic-coral">*</span></label>
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-gray-400">memory/</span>
+          <input id="ff-name" type="text" class="ff-input flex-1" style="font-family:ui-monospace,monospace" placeholder="kebab-case-name" />
+          <span class="text-xs text-gray-400">.md</span>
+        </div>
+        <p id="ff-name-warn" class="mt-1 text-xs text-amber-600 hidden"></p>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-medium text-valantic-dark mb-1">Type</label>
+          <select id="ff-type" class="ff-input"><option value="reference">reference</option><option value="user">user</option><option value="feedback">feedback</option><option value="project">project</option></select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-valantic-dark mb-1">Practice</label>
+          <input id="ff-practice" type="text" list="ff-practice-list" class="ff-input" placeholder="valantic practice area" />
+          <datalist id="ff-practice-list"><option value="SAP Core Business Services"></option><option value="Strategy &amp; Transformation"></option><option value="Transformation &amp; Security"></option><option value="Customer Experience"></option><option value="Data &amp; AI"></option></datalist>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-medium text-valantic-dark mb-1">Source bot</label>
+          <select id="ff-source-bot" class="ff-input"><option value="human">human</option><option value="claude">claude</option><option value="chatgpt">chatgpt</option><option value="copilot">copilot</option><option value="vally">vally</option></select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-valantic-dark mb-1">Origin</label>
+          <select id="ff-origin" class="ff-input"><option value="manual">manual</option><option value="conversation">conversation</option><option value="document">document</option></select>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-valantic-dark mb-1">Fact <span class="text-valantic-coral">*</span></label>
+        <textarea id="ff-body" rows="4" class="ff-input" placeholder="The fact itself — placeholders only for sensitive values."></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-medium text-valantic-dark mb-1">Related facts</label>
+          <input id="ff-related" type="text" class="ff-input" placeholder="comma-separated slugs" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-valantic-dark mb-1">Created</label>
+          <input id="ff-created" type="date" class="ff-input" />
+        </div>
+      </div>
+      <div class="flex items-center gap-2 pt-1">
+        <span class="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mr-0.5">on the grid</span>
+        <span id="ff-badge-type" class="badge-type"></span>
+        <span id="ff-badge-bot" class="badge-bot"></span>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3" style="padding:16px 28px;border-top:1px solid #F3F4F6">
+      <button id="ff-save-btn" type="button" class="bg-valantic-coral text-white text-sm font-semibold px-5 py-2.5 rounded-lg hover:bg-[#e0432f] transition-colors disabled:opacity-50">Save fact</button>
+      <button id="ff-cancel-btn" type="button" class="text-sm text-gray-500 hover:text-valantic-dark transition-colors">Cancel</button>
+      <span id="ff-msg" class="text-sm ml-auto"></span>
+    </div>
+  </div>
+
+  <style>
+    .ff-input { width:100%;border-radius:8px;border:1px solid #e5e7eb;background:#F7F7F7;padding:8px 12px;font-size:14px;color:#332F49;outline:none;transition:all .15s }
+    .ff-input:focus { border-color:#FF604D;box-shadow:0 0 0 3px rgba(255,96,77,.18) }
+  </style>
 
   <style>
     .chip {
@@ -339,6 +450,7 @@
     function openModal(name) {
       const f = allFacts.find(x => x.name === name);
       if (!f) return;
+      currentDetail = name;
 
       const bot       = BOT_STYLE[f.source_bot] || { bg: 'background:#F3F4F6;color:#374151', dot: 'background:#9CA3AF', label: f.source_bot };
       const typeStyle = TYPE_STYLE[f.type] || 'background:#F3F4F6;color:#374151';
@@ -382,6 +494,176 @@
     }
 
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    // ── Add / Edit fact form (Maike) ───────────────────────────────────────────
+    const _ffParams    = new URLSearchParams(location.search);
+    const EXTRACT_BASE  = (_ffParams.get('extract') || 'http://127.0.0.1:8788').replace(/\/$/, '');
+    const EXTRACT_URL    = EXTRACT_BASE + '/api/extract';
+    const EXTRACT_HEALTH = EXTRACT_BASE + '/api/health';
+
+    BOT_STYLE.human = { bg: 'background:#EEF2F7;color:#332F49', dot: 'background:#332F49', label: 'Human' };
+
+    let currentDetail = null, ffEditing = null, ffNameEdited = false, ffExtractOnline = false;
+    const ffEl    = id => document.getElementById(id);
+    const ffSlug  = s => (s || '').toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    const ffKebab = s => /^[a-z0-9]+(-[a-z0-9]+)*$/.test(s);
+    const ffToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+
+    const FF_EXAMPLES = {
+      'CRA template moved': 'We just moved the CRA gap-assessment template to the compliance share, and Maya Singh in the CISO office owns it now. Use it before quoting any CRA-readiness work for <kunde>.',
+      'go-to SAP integration expert': 'For SAP order-management to commerce-frontend integration questions, Marco Reinhardt in SAP Core is the go-to. He owns the integration-pattern library and should be booked early on retail commerce engagements.',
+      'estimation rule of thumb': 'Rule of thumb from the delivery-leads workshop: carry 20-25% contingency on any engagement crossing three or more practice areas, and size discovery at about 10% of total effort.',
+    };
+
+    function ffFlash(el, msg, kind) {
+      el.textContent = msg;
+      el.style.color = kind === 'ok' ? '#15803D' : kind === 'err' ? '#DC2626' : '#6B7280';
+    }
+
+    function ffRenderBadges() {
+      const t = ffEl('ff-type').value, b = ffEl('ff-source-bot').value;
+      ffEl('ff-badge-type').setAttribute('style', TYPE_STYLE[t] || 'background:#F3F4F6;color:#374151');
+      ffEl('ff-badge-type').textContent = t;
+      const bs = BOT_STYLE[b] || { bg: 'background:#F3F4F6;color:#374151', dot: 'background:#9CA3AF', label: b };
+      ffEl('ff-badge-bot').setAttribute('style', bs.bg);
+      ffEl('ff-badge-bot').innerHTML = `<span style="width:7px;height:7px;border-radius:50%;${bs.dot};flex-shrink:0"></span>${bs.label}`;
+    }
+
+    function ffCheckName() {
+      const name = ffEl('ff-name').value.trim();
+      const warn = ffEl('ff-name-warn');
+      if (name && allFacts.some(f => f.name === name) && ffEditing !== name) {
+        warn.textContent = `⚠ A fact named "${name}" exists — saving will update it (version bumps).`;
+        warn.classList.remove('hidden');
+      } else warn.classList.add('hidden');
+    }
+
+    function ffSet(fields) {
+      if ('description' in fields) ffEl('ff-description').value = fields.description || '';
+      if ('name' in fields) { ffEl('ff-name').value = fields.name || ''; ffNameEdited = true; }
+      if (fields.type) ffEl('ff-type').value = fields.type;
+      if ('practice' in fields) ffEl('ff-practice').value = fields.practice || '';
+      if (fields.source_bot) ffEl('ff-source-bot').value = fields.source_bot;
+      if (fields.origin) ffEl('ff-origin').value = fields.origin;
+      if ('body' in fields) ffEl('ff-body').value = fields.body || '';
+      if ('related' in fields) ffEl('ff-related').value = (fields.related || []).join(', ');
+      if (fields.created) ffEl('ff-created').value = fields.created;
+      ffRenderBadges(); ffCheckName();
+    }
+
+    function ffReset() {
+      ['ff-story', 'ff-description', 'ff-name', 'ff-practice', 'ff-body', 'ff-related'].forEach(id => ffEl(id).value = '');
+      ffEl('ff-type').value = 'reference';
+      ffEl('ff-source-bot').value = 'human';
+      ffEl('ff-origin').value = 'manual';
+      ffEl('ff-created').value = ffToday();
+      ffEl('ff-extract-msg').textContent = '';
+      ffEl('ff-msg').textContent = '';
+      ffEl('ff-name-warn').classList.add('hidden');
+      ffNameEdited = false;
+    }
+
+    function openFactForm(mode, name) {
+      ffReset();
+      if (mode === 'edit' && name) {
+        const f = allFacts.find(x => x.name === name);
+        if (f) {
+          ffEditing = name;
+          let body = f.body || '', related = [];
+          const m = body.match(/\n+Related:\s*(.+)\s*$/);
+          if (m) { related = (m[1].match(/\[\[([^\]]+)\]\]/g) || []).map(x => x.replace(/\[\[|\]\]/g, '')); body = body.slice(0, m.index); }
+          ffSet({ description: f.description, name: f.name, type: f.type, practice: f.practice, source_bot: f.source_bot, origin: f.origin, body: body.trim(), related, created: f.created });
+        }
+        ffEl('ff-name').readOnly = true;
+        ffEl('ff-story-section').style.display = 'none';
+        ffEl('ff-title').textContent = 'Edit fact';
+      } else {
+        ffEditing = null;
+        ffEl('ff-name').readOnly = false;
+        ffEl('ff-story-section').style.display = '';
+        ffEl('ff-title').textContent = 'Add a fact';
+      }
+      ffEl('form-backdrop').style.display = 'block';
+      ffEl('form-modal').style.display = 'flex';
+      ffRenderBadges();
+      setTimeout(() => (mode === 'edit' ? ffEl('ff-description') : ffEl('ff-story')).focus(), 30);
+    }
+
+    function closeFactForm() {
+      ffEl('form-backdrop').style.display = 'none';
+      ffEl('form-modal').style.display = 'none';
+    }
+
+    function editCurrent() { if (currentDetail) { closeModal(); openFactForm('edit', currentDetail); } }
+
+    async function ffExtract() {
+      const text = ffEl('ff-story').value.trim();
+      if (!text) { ffFlash(ffEl('ff-extract-msg'), 'Type a fact or story first.', 'err'); return; }
+      ffEl('ff-extract-btn').disabled = true;
+      ffFlash(ffEl('ff-extract-msg'), 'Extracting…', 'muted');
+      try {
+        const r = await fetch(EXTRACT_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+        if (!r.ok) throw new Error('server ' + r.status);
+        const d = await r.json();
+        ffNameEdited = false;
+        ffSet({ ...d, source_bot: 'human', origin: 'manual', created: ffEl('ff-created').value || ffToday() });
+        ffFlash(ffEl('ff-extract-msg'), 'Extracted ✓ — review and save.', 'ok');
+      } catch (err) {
+        ffFlash(ffEl('ff-extract-msg'), 'Extraction failed (' + err.message + '). Fill in manually.', 'err');
+      } finally { ffEl('ff-extract-btn').disabled = !ffExtractOnline; }
+    }
+
+    async function ffSave() {
+      const name = ffEl('ff-name').value.trim();
+      const description = ffEl('ff-description').value.trim();
+      const body = ffEl('ff-body').value.trim();
+      const errs = [];
+      if (!name) errs.push('a slug'); else if (!ffKebab(name)) errs.push('a valid kebab-case slug');
+      if (!description) errs.push('a description');
+      if (!body) errs.push('the fact body');
+      if (errs.length) { ffFlash(ffEl('ff-msg'), 'Need ' + errs.join(', ') + '.', 'err'); return; }
+      const related = ffEl('ff-related').value.split(',').map(ffSlug).filter(Boolean);
+      let fullBody = body;
+      if (related.length && !/\[\[/.test(fullBody)) fullBody += `\n\nRelated: ${related.map(r => `[[${r}]]`).join(', ')}`;
+      const payload = {
+        name, description, type: ffEl('ff-type').value, practice: ffEl('ff-practice').value.trim(),
+        source_bot: ffEl('ff-source-bot').value, origin: ffEl('ff-origin').value,
+        body: fullBody, created: ffEl('ff-created').value || ffToday(),
+      };
+      ffEl('ff-save-btn').disabled = true;
+      ffFlash(ffEl('ff-msg'), 'Saving…', 'muted');
+      try {
+        const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        if (!r.ok) throw new Error('store ' + r.status);
+        closeFactForm();
+        await loadFacts();   // refresh the grid — the new/updated card appears
+        openModal(name);     // open the saved fact
+      } catch (err) {
+        ffFlash(ffEl('ff-msg'), 'Save failed (' + err.message + '). Is the API running on :8787?', 'err');
+      } finally { ffEl('ff-save-btn').disabled = false; }
+    }
+
+    async function ffProbe() {
+      try { const r = await fetch(EXTRACT_HEALTH); ffExtractOnline = r.ok; } catch { ffExtractOnline = false; }
+      const pill = ffEl('ff-extract-pill');
+      pill.textContent = ffExtractOnline ? 'extraction ready' : 'extraction offline';
+      pill.className = 'text-[11px] font-medium px-2.5 py-1 rounded-full shrink-0 self-center ' + (ffExtractOnline ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white');
+      ffEl('ff-extract-btn').disabled = !ffExtractOnline;
+      if (!ffExtractOnline) ffFlash(ffEl('ff-extract-msg'), 'Extractor offline — fill in manually below.', 'muted');
+    }
+
+    ffEl('add-fact-btn').addEventListener('click', () => openFactForm('add'));
+    ffEl('ff-extract-btn').addEventListener('click', ffExtract);
+    ffEl('ff-manual-btn').addEventListener('click', () => ffEl('ff-description').focus());
+    ffEl('ff-save-btn').addEventListener('click', ffSave);
+    ffEl('ff-cancel-btn').addEventListener('click', closeFactForm);
+    ffEl('ff-description').addEventListener('input', () => { if (!ffNameEdited) ffEl('ff-name').value = ffSlug(ffEl('ff-description').value); ffCheckName(); ffRenderBadges(); });
+    ffEl('ff-name').addEventListener('input', () => { ffNameEdited = true; ffCheckName(); });
+    ffEl('ff-type').addEventListener('change', ffRenderBadges);
+    ffEl('ff-source-bot').addEventListener('change', ffRenderBadges);
+    document.querySelectorAll('.ff-example').forEach(b => b.addEventListener('click', () => { ffEl('ff-story').value = FF_EXAMPLES[b.textContent] || ''; ffEl('ff-story').focus(); }));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeFactForm(); });
+    ffProbe();
 
     loadFacts();
   </script>
