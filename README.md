@@ -1,9 +1,14 @@
-# Option 2 — Institutional Memory Agent
+# valantic Company Brain — Institutional Memory
 
-**Concept landed:** Memory & context engineering
-**Tech:** [Claude Managed Agents](https://platform.claude.com/docs/en/managed-agents/overview) + the [Memory tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool)
-**Time:** 60 minutes
-**Output:** An agent that visibly gets sharper across multiple sessions on the same domain.
+> **Current direction:** the live build is a *persistent, vendor-neutral memory layer* (markdown-in-git
+> behind one MCP server) that every assistant — Claude, Copilot, ChatGPT, Vally — reads and writes.
+> The plan is in [`PLAN.md`](./PLAN.md); the demo storyline is in [`demo-script.md`](./demo-script.md).
+> The managed-agents scripts below (`create_agent.py`, `run_session_*.py`) are the original two-session
+> proof and are kept as a fallback.
+
+**Concept:** Memory & context engineering — valantic's institutional memory of *how we deliver*.
+**Tech:** MCP server over a markdown+frontmatter store (primary) · [Claude Managed Agents](https://platform.claude.com/docs/en/managed-agents/overview) + the [Memory tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool) (fallback two-session proof)
+**Output:** A company brain that any assistant reads/writes, and that visibly gets sharper across sessions.
 
 ## The pitch
 
@@ -78,16 +83,20 @@ Read both out loud. Let the room see the agent's answer sharpen. Then open the m
 ## What's in this folder
 
 ```
-02-institutional-memory-agent/
+valantic-memory/
 ├── README.md                      (you are here)
-├── scenario-cards.md
+├── PLAN.md                        (the company-brain build plan — current direction)
+├── demo-script.md                 (the 3-min demo storyline / golden thread)
+├── scenario-cards.md              (delivery personas; Card A is the anchor)
 ├── stretch-goals.md
 ├── requirements.txt
-├── create_agent.py                (creates the Managed Agent with Memory tool)
-├── run_session_1.py               (session 1 — uses round1 docs)
-├── run_session_2.py               (session 2 — adds round2 docs, asks same question)
+├── memory/                        (the seeded company brain — 8 valantic delivery facts + MEMORY.md)
+├── web/                           (dashboard assets — add-fact.html, sample-memories.json)
+├── create_agent.py                (fallback: creates the Managed Agent with Memory tool)
+├── run_session_1.py               (fallback session 1 — uses round1 docs)
+├── run_session_2.py               (fallback session 2 — adds round2 docs, asks same question)
 ├── stretch_memory_curator.py      (stretch: curator sub-agent)
 └── synthetic-data/
-    ├── round1/                    (initial context — onboarding handbook, policies, customer cases)
-    └── round2/                    (updates and contradictions)
+    ├── round1/                    (firm's delivery knowledge — playbook, practice directory, assets)
+    └── round2/                    (updates & contradictions — re-org, superseded accelerator)
 ```
