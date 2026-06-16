@@ -49,19 +49,22 @@ Claude calls `memory_search` and answers from the brain — not from thin air:
 **Say it out loud:** "That's three past engagements answering her in ten seconds. None of it was in
 her project — it's the firm's memory, written by colleagues she's never met."
 
-### Beat 2 — "Remember this for everyone" (capture) · 40 sec
+### Beat 2 — "It learns from the chat" (autonomous capture — the wow) · 40 sec
 
-While scoping, Lena learns something worth keeping. She tells **Claude**:
+This is the differentiator: Claude captures what it learns **without being told to**. Still scoping,
+Lena just thinks out loud:
 
-> "Capture a lesson for the firm: on retail commerce work, size the SAP order-integration for peak
-> seasonal load at scoping, not steady-state — we under-scoped it on the last two and it caused rework
-> near go-live. The load-sizing checklist is the one to use."
+> "One thing to watch on this one — on the last two retail builds we sized the SAP order-integration
+> for steady-state and got burned at peak. We should size it for Black-Friday load from the start."
 
-Claude calls `memory_write`. **Switch to the dashboard and refresh** → a new card appears:
-`sap-order-integration-peak-sizing`, badge **"taught by Claude,"** tagged SAP, provenance *Lena Brandt*.
+She **never says "save that."** The memory protocol makes Claude recognise a durable lesson and call
+`memory_write` itself (`origin: conversation`). **Switch to the dashboard and refresh** → a new card:
+`sap-order-integration-peak-sizing`, badges **"taught by Claude"** + **"from conversation,"** tagged
+SAP, provenance *Lena Brandt*.
 
-**Say it out loud:** "She didn't file a ticket or update a wiki. She just told her assistant — and now
-it's the firm's, forever."
+**Say it out loud:** "She didn't file a ticket, update a wiki, or even ask it to remember. She just
+talked — and Claude decided that was worth keeping for the whole firm. It learns from the conversation,
+not from a document we fed it."
 
 ### Beat 3 — "Same brain, any assistant" (cross-bot) · 30 sec
 
