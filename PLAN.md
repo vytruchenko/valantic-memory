@@ -2,8 +2,17 @@
 
 ## Context
 
-**Goal:** Build a *persistent, vendor-neutral memory / knowledge layer* for valantic that any
-chatbot can read and write — Claude (primary), Copilot, ChatGPT, and the internal **Vally** bot.
+**Goal:** Build valantic's **company brain** — a *persistent, vendor-neutral memory / knowledge layer*
+that any assistant can read and write — Claude (primary), Copilot, ChatGPT, and the internal **Vally**
+bot.
+
+**The tangible problem (internal delivery & staffing):** valantic delivers transformation end to end —
+strategy, security, SAP, data & AI, customer experience. The hard-won knowledge of *how we deliver*
+(which migration path worked, who the internal expert is, which accelerator to reuse, what we
+under-estimated last time) lives in people's heads and is scattered across four different AI
+assistants with **zero shared memory**. So consultants re-solve solved problems. The company brain
+captures that knowledge once, in any assistant, and makes it reusable by everyone. The golden-thread
+storyline for the live demo is in [`demo-script.md`](./demo-script.md).
 
 **The headline capability (Tier 1):** the layer must capture what Claude *learns during a
 conversation* — not just facts we pre-load from background documents. When something durable
@@ -135,8 +144,13 @@ and the demo story (which valantic fact gets "taught" live). Then split.
     (Tier 1) or a document.
   - `memory_list()` and `memory_get(name)`.
 - Transport: **stdio** (no hosting needed for the live Claude demo).
-- Seed `memory/` with ~6–8 sanitized valantic facts (CRA/NIS2/IEC 62443 references, onboarding,
-  team pointers). Fallback content already in repo: `synthetic-data/round1/` if we run short on real content.
+- `memory/` is **already seeded** with 8 sanitized valantic delivery facts spanning every practice
+  area (SAP, Strategy & Transformation, Transformation & Security, Data & AI, Customer Experience) and
+  every assistant as provenance (`claude`/`copilot`/`chatgpt`/`vally`/`human`), plus `MEMORY.md`. These
+  are the cards the dashboard shows in the demo; `web/sample-memories.json` mirrors them for frontend
+  dev. The **one fact written live** in the demo (`sap-order-integration-peak-sizing`) is intentionally
+  *not* seeded — Claude writes it on stage. Reshape the source docs in `synthetic-data/round1`–`round2`
+  if you want to regenerate seeds.
 - Set aside (do not delete) the managed-memory scripts — out of scope for the portable layer.
 
 ### Layer 2 — Wire into Claude LIVE + the capture protocol (Jenny)
@@ -170,17 +184,28 @@ and the demo story (which valantic fact gets "taught" live). Then split.
 
 ---
 
-## Demo script (3 min) — Tier 1 is the star
-1. Show the dashboard with a few seeded cards — "valantic's shared knowledge layer."
-2. Have a **natural conversation** with Claude about a CRA/NIS2 topic and casually drop a durable
-   fact ("we just moved the gap-assessment template to `<path>`"). **Don't tell it to save** —
-   the memory protocol makes Claude decide to call `memory_write` (`origin: conversation`) itself.
-   *This is the wow: it learns from the chat, not from a document we fed it.*
-3. Refresh dashboard → new card appears, badges **"taught by Claude"** + **"from conversation."**
-4. Point to the pre-seeded `chatgpt`/`vally` cards: "same store, any bot — one MCP server."
-5. Open a **fresh Claude session**, ask about that template → it recalls the fact from memory.
-   **Persistent across sessions.** (Optional: edit a fact in the dashboard → Claude reflects the edit.)
-6. Close on the config diagram: Copilot/ChatGPT/Vally = config, not rebuild.
+## Demo script (3 min) — golden thread, Tier 1 is the star
+
+Full presenter version with exact lines in [`demo-script.md`](./demo-script.md). The beats:
+
+1. **Frame the pain (one slide):** four assistants across the firm, zero shared memory, every
+   project's lessons die in a project channel. Show the populated dashboard — "valantic's company brain."
+2. **Recall —** *Lena* is scoping an S/4HANA + commerce retail engagement. In **Claude** she asks
+   "has valantic done this before, who do I pull in, what can I reuse?" → `memory_search` returns three
+   colleagues' past-engagement facts (brownfield playbook, the integration expert, the estimate
+   contingency). *Knowledge she'd otherwise spend days chasing.*
+3. **Capture (the wow — Tier 1) —** Lena keeps talking and a durable lesson surfaces naturally
+   ("size the SAP order-integration for peak load — we under-scoped it twice"). **She doesn't tell
+   Claude to save it** — the memory protocol makes Claude write the fact *itself*
+   (`origin: conversation`). Refresh dashboard → new card, badges **"taught by Claude"** +
+   **"from conversation."** *It learned from the chat, not from a document we fed it.*
+4. **Cross-bot —** point to seeded cards from **Copilot / ChatGPT / Vally**: "four assistants, one
+   brain — vendor-neutral by design."
+5. **Recall + govern —** open a fresh Claude session → it recalls the new fact (**persistent across
+   sessions**). Then a lead edits the `sap-commerce-integration-expert` card (post-re-org: Marco →
+   Priya) and the next session reflects it. **Persistent, shared, governed.**
+6. **Close —** config diagram: Copilot/ChatGPT/Vally = config, not rebuild. "Every engagement,
+   captured once, reusable by everyone, through whatever assistant they already use."
 
 ---
 
