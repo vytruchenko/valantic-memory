@@ -29,6 +29,9 @@
     :root{font-size:16px}
     body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
     .pre-wrap{white-space:pre-wrap;word-break:break-word}
+    /* dashboard-parity badges (same as Julian's grid cards) */
+    .badge-bot  { display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;line-height:1 }
+    .badge-type { display:inline-flex;align-items:center;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;line-height:1.4 }
   </style>
 </head>
 
@@ -110,6 +113,12 @@
             </select>
             <button id="resetBtn" type="button" class="text-xs text-slate-400 hover:text-brand transition">reset</button>
           </div>
+        </div>
+
+        <div class="flex items-center gap-2 mb-4">
+          <span class="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mr-0.5">on the dashboard</span>
+          <span id="badgeType" class="badge-type"></span>
+          <span id="badgeBot" class="badge-bot"></span>
         </div>
 
         <form id="factForm" class="space-y-4" novalidate>
@@ -257,6 +266,7 @@
       body: $("body"), related: $("related"), created: $("created"), versionNote: $("versionNote"),
       saveBtn: $("saveBtn"), copyBtn: $("copyBtn"), downloadBtn: $("downloadBtn"),
       formMsg: $("formMsg"), preview: $("preview"), indexLine: $("indexLine"), filePath: $("filePath"),
+      badgeType: $("badgeType"), badgeBot: $("badgeBot"),
     };
 
     const EXAMPLES = {
@@ -264,6 +274,29 @@
       "go-to SAP integration expert": "For SAP order-management to commerce-frontend integration questions, Marco Reinhardt in SAP Core is the go-to. He owns the integration-pattern library and should be booked early on retail commerce engagements.",
       "estimation rule of thumb": "Rule of thumb from the delivery-leads workshop: carry 20-25% contingency on any engagement crossing three or more practice areas, and size discovery at about 10% of total effort.",
     };
+
+    // ---- dashboard-parity badges (Julian's exact BOT_STYLE / TYPE_STYLE) ----
+    const BOT_STYLE = {
+      human:   { bg: "background:#EEF2F7;color:#332F49", dot: "background:#332F49", label: "human"   },
+      claude:  { bg: "background:#FFF3F2;color:#C0392B", dot: "background:#FF604D", label: "claude"  },
+      chatgpt: { bg: "background:#ECFDF5;color:#166534", dot: "background:#22C55E", label: "chatgpt" },
+      copilot: { bg: "background:#EFF6FF;color:#1D4ED8", dot: "background:#3B82F6", label: "copilot" },
+      vally:   { bg: "background:#F5F3FF;color:#6D28D9", dot: "background:#8B5CF6", label: "vally"   },
+    };
+    const TYPE_STYLE = {
+      reference: "background:#F3F4F6;color:#374151",
+      project:   "background:#EEF2FF;color:#3730A3",
+      user:      "background:#F0FDFA;color:#0F766E",
+      feedback:  "background:#FFF1F2;color:#BE123C",
+    };
+    function renderBadges() {
+      const t = els.type.value, b = els.sourceBot.value;
+      els.badgeType.setAttribute("style", TYPE_STYLE[t] || "background:#F3F4F6;color:#374151");
+      els.badgeType.textContent = t;
+      const bs = BOT_STYLE[b] || { bg: "background:#F3F4F6;color:#374151", dot: "background:#9CA3AF", label: b };
+      els.badgeBot.setAttribute("style", bs.bg);
+      els.badgeBot.innerHTML = `<span style="width:7px;height:7px;border-radius:50%;${bs.dot};flex-shrink:0"></span>${bs.label}`;
+    }
 
     // ---- helpers --------------------------------------------------------
     const slugify = (s) => (s || "").toLowerCase().trim()
@@ -325,6 +358,7 @@
           `⚠ A fact named <code>${d.name}</code> exists — saving will <b>update</b> it (v${d.version}).`;
         els.nameWarn.classList.remove("hidden");
       } else { els.nameWarn.classList.add("hidden"); }
+      renderBadges();
     }
 
     function validate(d) {
