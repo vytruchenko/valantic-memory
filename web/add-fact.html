@@ -5,67 +5,93 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>valantic Knowledge Layer — Capture a Fact</title>
 
-  <!-- Zero-build: Tailwind via CDN. No npm, no bundler. -->
+  <!-- Zero-build: Tailwind via CDN + Google Fonts. No npm, no bundler. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
+    // valantic brand palette. Confirm exact hex + typeface against the official styleguide.
     tailwind.config = {
       theme: { extend: {
         colors: {
-          brand: { DEFAULT: '#e6007e', dark: '#b80064', light: '#ffe3f1' }, // valantic-ish magenta — swap for exact brand hex
-          ink:   { DEFAULT: '#0f172a', soft: '#334155' },
+          valantic: { dark: '#332F49', coral: '#FF604D', light: '#F7F7F7' }, // official valantic palette
+          brand: { DEFAULT: '#FF604D', dark: '#E0432F', light: '#FFF3F2' },  // coral accent (matches Julian's dashboard)
+          ink:   { DEFAULT: '#332F49', soft: '#6B7280' },                    // dark purple + muted grey
+          paper: '#F7F7F7',
         },
         fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+        boxShadow: { card: '0 1px 2px rgba(20,20,30,.04), 0 10px 30px -16px rgba(20,20,30,.18)' },
       } },
     };
   </script>
-  <style>:root{font-size:16px}.pre-wrap{white-space:pre-wrap;word-break:break-word}</style>
+  <style>
+    :root{font-size:16px}
+    body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+    .pre-wrap{white-space:pre-wrap;word-break:break-word}
+  </style>
 </head>
 
-<body class="bg-slate-50 text-ink min-h-screen">
+<body class="bg-paper text-ink min-h-screen antialiased">
 
   <!-- ============================ HEADER ============================ -->
-  <header class="bg-ink text-white">
-    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <div class="h-8 w-8 rounded bg-brand flex items-center justify-center font-bold">v</div>
+  <header class="bg-white border-b border-gray-200 shadow-sm">
+    <div class="max-w-6xl mx-auto px-6 flex items-stretch">
+      <a href="#" class="flex items-center py-4 pr-6 border-r border-gray-200 shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 270" class="h-7 w-auto" fill="#332F49">
+        <polygon points="125.32 91.07 106.4 148.74 87.48 91.07 60 91.07 91.99 177.53 120.81 177.53 152.8 91.07 125.32 91.07"/>
+        <path d="M240.91,177.53V91.07H216.12v9.66l-1.44-1.66C208.65,92.12,200,88.6,189,88.6a39.22,39.22,0,0,0-29.11,13.15,49.57,49.57,0,0,0,0,65.11A39.22,39.22,0,0,0,189,180c11,0,19.6-3.52,25.64-10.47l1.44-1.66v9.66Zm-46.58-20.91c-13,0-21.79-9-21.79-22.32S181.3,112,194.33,112s21.79,9,21.79,22.32S207.37,156.62,194.33,156.62Z"/>
+        <path d="M378.89,177.53V91.07H354.1v9.66l-1.44-1.66C346.62,92.12,338,88.6,327,88.6a39.22,39.22,0,0,0-29.11,13.15,49.57,49.57,0,0,0,0,65.11A39.22,39.22,0,0,0,327,180c11,0,19.6-3.52,25.64-10.47l1.44-1.66v9.66ZM332.3,156.62c-13,0-21.79-9-21.79-22.32S319.27,112,332.3,112s21.79,9,21.79,22.32S345.34,156.62,332.3,156.62Z"/>
+        <polygon points="253.12 57.43 253.12 177.53 277.91 177.53 277.91 49.99 253.12 57.43"/>
+        <path d="M432.57,113.39a16.7,16.7,0,0,1,16.68,16.68v47.46H474V124.39a35.78,35.78,0,0,0-56.85-28.93l-1.31,1V91.07H391.1v86.47h24.79V130.07A16.7,16.7,0,0,1,432.57,113.39Z"/>
+        <path d="M499.9,171.52c6.48,5.85,17.64,7.79,35.11,6.09V155.26c-8,.44-13.14.12-16-2.54a7.66,7.66,0,0,1-2.19-5.91v-32H535V91.07H516.86V60.71l-24.79,7.44V91.07H478V114.8h14.1v32C492.07,158.84,494.56,166.69,499.9,171.52Z"/>
+        <rect x="542.82" y="91.07" width="24.79" height="86.47"/>
+        <path d="M555.21,50a15,15,0,1,0,15,15A15.24,15.24,0,0,0,555.21,50Z"/>
+        <path d="M638.38,146c-3.11,5.91-9.7,9.54-17.44,9.54-12,0-20.73-8.94-20.73-21.26S608.92,113,620.94,113c7.69,0,14.14,3.55,17.43,9.55L660,110c-7.74-13.24-22.49-21.43-38.71-21.43-26.15,0-45.88,19.65-45.88,45.7S595.14,180,621.29,180c16.25,0,31-8.26,38.71-21.6Z"/>
+      </svg>
+      </a>
+      <div class="flex items-center pl-6">
         <div>
-          <h1 class="text-lg font-semibold leading-tight">valantic Knowledge Layer</h1>
-          <p class="text-xs text-slate-300 leading-tight">Capture a fact &middot; tell it, don't fill it</p>
+          <div class="text-base font-semibold leading-tight text-ink">Knowledge Layer</div>
+          <div class="text-xs text-gray-400 mt-0.5">Capture a fact — tell it, don't fill it</div>
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <span id="extractPill" class="text-xs font-medium px-3 py-1.5 rounded-full bg-slate-700 text-slate-200">extraction…</span>
-        <span id="storePill"   class="text-xs font-medium px-3 py-1.5 rounded-full bg-slate-700 text-slate-200">store…</span>
+      <div class="ml-auto flex items-center gap-2 py-4">
+        <span id="extractPill" class="text-xs font-medium px-3 py-1.5 rounded-full bg-gray-100 text-gray-500">extraction…</span>
+        <span id="storePill"   class="text-xs font-medium px-3 py-1.5 rounded-full bg-gray-100 text-gray-500">store…</span>
       </div>
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto px-6 py-6 space-y-6">
+  <main class="max-w-6xl mx-auto px-6 py-8 space-y-6">
 
     <!-- ====================== STORY (the headline) ====================== -->
-    <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-      <label class="block text-base font-semibold mb-1">Describe the fact, or tell a quick story</label>
-      <p class="text-sm text-slate-500 mb-3">
-        Plain language — Claude pulls out the structured fields. Use placeholders
-        (<code>&lt;kunde&gt;</code>, <code>&lt;path&gt;</code>, <code>&lt;person&gt;</code>) for anything sensitive.
+    <section class="bg-white rounded-xl border border-gray-200 shadow-sm p-7">
+      <div class="flex items-center gap-2 mb-1.5">
+        <span class="text-brand text-lg leading-none">✦</span>
+        <label class="block text-xl font-bold tracking-tight">Describe the fact, or tell a quick story</label>
+      </div>
+      <p class="text-sm text-ink-soft mb-4 max-w-2xl">
+        Plain language — Claude pulls out the structured fields for you. Use placeholders
+        (<code class="text-brand">&lt;kunde&gt;</code>, <code class="text-brand">&lt;path&gt;</code>, <code class="text-brand">&lt;person&gt;</code>) for anything sensitive.
       </p>
       <textarea id="story" rows="4"
-        class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-brand focus:border-brand"
+        class="w-full rounded-xl border border-gray-200 px-4 py-3 text-[15px] leading-relaxed placeholder:text-slate-400 outline-none transition focus:ring-4 focus:ring-brand/15 focus:border-brand"
         placeholder="e.g. We just moved the CRA gap-assessment template to the compliance share, and Maya in the CISO office owns it now. Use it before quoting any CRA-readiness work."></textarea>
 
-      <div class="mt-2 flex flex-wrap gap-1.5">
-        <span class="text-xs text-slate-400 mr-1 self-center">try:</span>
-        <button type="button" class="example text-xs px-2 py-1 rounded-full bg-slate-100 hover:bg-brand-light">CRA template moved</button>
-        <button type="button" class="example text-xs px-2 py-1 rounded-full bg-slate-100 hover:bg-brand-light">go-to SAP integration expert</button>
-        <button type="button" class="example text-xs px-2 py-1 rounded-full bg-slate-100 hover:bg-brand-light">estimation rule of thumb</button>
+      <div class="mt-3 flex flex-wrap gap-1.5 items-center">
+        <span class="text-xs text-slate-400 mr-1">try:</span>
+        <button type="button" class="example text-xs px-2.5 py-1 rounded-full border border-slate-200 text-ink-soft transition hover:border-brand hover:text-brand hover:bg-brand-light">CRA template moved</button>
+        <button type="button" class="example text-xs px-2.5 py-1 rounded-full border border-slate-200 text-ink-soft transition hover:border-brand hover:text-brand hover:bg-brand-light">go-to SAP integration expert</button>
+        <button type="button" class="example text-xs px-2.5 py-1 rounded-full border border-slate-200 text-ink-soft transition hover:border-brand hover:text-brand hover:bg-brand-light">estimation rule of thumb</button>
       </div>
 
-      <div class="mt-4 flex flex-wrap items-center gap-3">
+      <div class="mt-5 flex flex-wrap items-center gap-3">
         <button id="extractBtn" type="button"
-          class="px-5 py-2.5 rounded-lg bg-brand text-white font-medium hover:bg-brand-dark transition disabled:opacity-50">
+          class="px-5 py-2.5 rounded-xl bg-brand text-white font-semibold transition hover:bg-brand-dark shadow-[0_10px_22px_-10px_rgba(255,96,77,.8)] disabled:opacity-50 disabled:shadow-none">
           ✨ Extract fields
         </button>
-        <button id="manualBtn" type="button" class="text-sm text-slate-500 hover:text-brand">or fill in manually</button>
+        <button id="manualBtn" type="button" class="text-sm text-ink-soft hover:text-brand transition">or fill in manually</button>
         <span id="extractMsg" class="text-sm"></span>
       </div>
     </section>
@@ -74,15 +100,15 @@
     <div id="reviewWrap" class="grid grid-cols-1 lg:grid-cols-2 gap-6 hidden">
 
       <!-- fields (pre-filled after extraction; editable) -->
-      <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <section class="bg-white rounded-xl border border-gray-200 shadow-sm p-7">
         <div class="flex items-center justify-between mb-5">
-          <h2 class="text-sm font-semibold">Review &amp; save</h2>
+          <h2 class="text-base font-bold tracking-tight">Review &amp; save</h2>
           <div class="flex items-center gap-3">
             <select id="factPicker" title="Edit an existing fact"
-              class="hidden text-xs rounded-lg border border-slate-300 px-2 py-1 focus:ring-2 focus:ring-brand">
+              class="hidden text-xs rounded-lg border border-gray-200 px-2 py-1 focus:ring-2 focus:ring-brand">
               <option value="">— edit existing… —</option>
             </select>
-            <button id="resetBtn" type="button" class="text-xs text-slate-500 hover:text-brand">reset</button>
+            <button id="resetBtn" type="button" class="text-xs text-slate-400 hover:text-brand transition">reset</button>
           </div>
         </div>
 
@@ -91,7 +117,7 @@
             <label class="block text-sm font-medium mb-1">Description <span class="text-brand">*</span></label>
             <input id="description" type="text" maxlength="180" autocomplete="off"
               placeholder="One line — the recall hook"
-              class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-brand focus:border-brand" />
+              class="w-full rounded-lg border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-brand focus:border-brand" />
           </div>
 
           <div>
@@ -99,7 +125,7 @@
             <div class="flex items-center gap-2">
               <code class="text-xs text-slate-400">memory/</code>
               <input id="name" type="text" autocomplete="off" placeholder="kebab-case-name"
-                class="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-brand focus:border-brand" />
+                class="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-brand focus:border-brand" />
               <code class="text-xs text-slate-400">.md</code>
             </div>
             <p id="nameWarn" class="mt-1.5 text-xs hidden"></p>
@@ -108,7 +134,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium mb-1">Type</label>
-              <select id="type" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand">
+              <select id="type" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand">
                 <option value="reference">reference</option>
                 <option value="user">user</option>
                 <option value="feedback">feedback</option>
@@ -119,7 +145,7 @@
               <label class="block text-sm font-medium mb-1">Practice</label>
               <input id="practice" type="text" list="practiceList" autocomplete="off"
                 placeholder="valantic practice area"
-                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand" />
+                class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand" />
               <datalist id="practiceList">
                 <option value="SAP Core Business Services"></option>
                 <option value="Strategy &amp; Transformation"></option>
@@ -133,7 +159,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium mb-1">Source bot</label>
-              <select id="sourceBot" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand">
+              <select id="sourceBot" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand">
                 <option value="human">human</option>
                 <option value="claude">claude</option>
                 <option value="chatgpt">chatgpt</option>
@@ -143,7 +169,7 @@
             </div>
             <div>
               <label class="block text-sm font-medium mb-1">Origin</label>
-              <select id="origin" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand">
+              <select id="origin" class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand">
                 <option value="manual">manual</option>
                 <option value="conversation">conversation</option>
                 <option value="document">document</option>
@@ -154,7 +180,7 @@
           <div>
             <label class="block text-sm font-medium mb-1">Fact <span class="text-brand">*</span></label>
             <textarea id="body" rows="4"
-              class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:ring-2 focus:ring-brand focus:border-brand"
+              class="w-full rounded-lg border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-brand focus:border-brand"
               placeholder="The fact itself — placeholders only for sensitive values."></textarea>
           </div>
 
@@ -162,21 +188,21 @@
             <div>
               <label class="block text-sm font-medium mb-1">Related facts</label>
               <input id="related" type="text" autocomplete="off" placeholder="comma-separated slugs"
-                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand" />
+                class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand" />
             </div>
             <div>
               <label class="block text-sm font-medium mb-1">Created</label>
               <input id="created" type="date"
-                class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand" />
+                class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-brand focus:border-brand" />
               <p id="versionNote" class="mt-1 text-xs text-slate-400">New fact → version 1.</p>
             </div>
           </div>
 
           <div class="pt-1 flex flex-wrap items-center gap-3">
             <button id="saveBtn" type="submit"
-              class="px-5 py-2.5 rounded-lg bg-brand text-white font-medium hover:bg-brand-dark transition disabled:opacity-50">Save fact</button>
-            <button id="copyBtn" type="button" class="px-4 py-2.5 rounded-lg border border-slate-300 text-sm hover:bg-slate-50">Copy markdown</button>
-            <button id="downloadBtn" type="button" class="px-4 py-2.5 rounded-lg border border-slate-300 text-sm hover:bg-slate-50">Download .md</button>
+              class="px-5 py-2.5 rounded-xl bg-brand text-white font-semibold transition hover:bg-brand-dark shadow-[0_10px_22px_-10px_rgba(255,96,77,.8)] disabled:opacity-50 disabled:shadow-none">Save fact</button>
+            <button id="copyBtn" type="button" class="px-4 py-2.5 rounded-xl border border-gray-200 text-sm transition hover:border-brand hover:text-brand">Copy markdown</button>
+            <button id="downloadBtn" type="button" class="px-4 py-2.5 rounded-xl border border-gray-200 text-sm transition hover:border-brand hover:text-brand">Download .md</button>
             <span id="formMsg" class="text-sm"></span>
           </div>
         </form>
@@ -184,18 +210,18 @@
 
       <!-- live preview -->
       <section class="space-y-4">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div class="px-4 py-2.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between">
-            <span class="text-sm font-medium">Live file preview</span>
-            <code id="filePath" class="text-xs text-slate-500">memory/&lt;name&gt;.md</code>
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div class="px-4 py-3 bg-valantic-light border-b border-gray-200 text-ink flex items-center justify-between">
+            <span class="text-sm font-semibold tracking-tight">Live file preview</span>
+            <code id="filePath" class="text-xs text-brand">memory/&lt;name&gt;.md</code>
           </div>
-          <pre id="preview" class="pre-wrap p-4 text-sm font-mono text-ink-soft leading-relaxed min-h-[300px]"></pre>
+          <pre id="preview" class="pre-wrap p-4 text-[13px] font-mono text-ink-soft leading-relaxed min-h-[300px]"></pre>
         </div>
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div class="px-4 py-2.5 bg-slate-100 border-b border-slate-200">
-            <span class="text-sm font-medium">Appends to <code class="text-xs">MEMORY.md</code></span>
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <div class="px-4 py-3 bg-valantic-light border-b border-gray-200">
+            <span class="text-sm font-semibold">Appends to <code class="text-xs text-brand">MEMORY.md</code></span>
           </div>
-          <pre id="indexLine" class="pre-wrap p-4 text-sm font-mono text-ink-soft"></pre>
+          <pre id="indexLine" class="pre-wrap p-4 text-[13px] font-mono text-ink-soft"></pre>
         </div>
         <p class="text-xs text-slate-400 leading-relaxed">
           The actual markdown file written to the git-backed store — the same store the
