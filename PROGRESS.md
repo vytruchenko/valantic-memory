@@ -1,87 +1,91 @@
 # PROGRESS — engine workstream (branch `engine`)
 
-What we built so far for the valantic Knowledge Layer (Jenny / the engine, the
-critical path in [PLAN.md](PLAN.md)). Status: **Layers 1–2 done, REST done.**
+What we built for the valantic Knowledge Layer (Jenny / the engine — the critical path in
+[PLAN.md](PLAN.md)). Status: **MCP server, store, REST read+write all done and verified;
+Maike's form + Julian's dashboard run live against it. Next: host it (Vercel + Azure) so it's shared.**
 
 ## Done
 
 ### 1. MCP server — [mcp_server.py](mcp_server.py)
-Vendor-neutral memory layer over a git-backed markdown store (`memory/`), using the
-official `mcp` Python SDK (FastMCP, **stdio** transport). Four tools:
-- `memory_search(query)` — keyword recall over frontmatter `description` + body, ranked.
-- `memory_write(name, description, body, type, source_bot, origin, created)` — create/
-  overwrite a fact, **bump `version`** on update, rebuild `MEMORY.md`. `origin` records
-  Tier-1 conversational capture vs document ingestion; `created` is passed in (no runtime clock).
-- `memory_list()` — index without bodies.
-- `memory_get(name)` — one full fact.
+Vendor-neutral memory layer over a git-backed markdown store (`memory/`), using the official
+`mcp` Python SDK (FastMCP, **stdio** transport). Four tools:
+- `memory_search(query)` — keyword recall over `description` + body, ranked.
+- `memory_write(name, description, body, type, source_bot, origin, created, practice)` —
+  create/overwrite a fact, **auto-bump `version`** on update, rebuild `MEMORY.md`.
+- `memory_list()` — index without bodies. · `memory_get(name)` — one full fact.
 
-Verified: all four tools register and run; search ranks correctly; update bumps version.
+**Tier-1 capture protocol baked into the server** (not a vendor file, so it's portable to any
+client with zero per-user setup): the FastMCP `instructions` field carries the full
+recall → capture → update protocol + sanitization/CISO/SiBe guardrails, and the tool
+descriptions are imperative (`memory_search`: "CALL THIS FIRST"; `memory_write`: "CALL THIS
+PROACTIVELY, without being asked"). [CLAUDE.md](CLAUDE.md) is a Claude-Code-only mirror, not required.
 
-### 2. Seeded store — [memory/](memory/) (8 facts) + [seed_memory.py](seed_memory.py)
-8 sanitized facts (placeholders only — `<kunde>`, `<host>`, `<person>`, `<path>`):
-CRA template, NIS2 scope, IEC 62443 OT baseline, prod-access flow, on-call owner,
-onboarding pointers, VS-NFD contact, incident comms. **2 are cross-bot** — one
-`source_bot: chatgpt`, one `vally` — so the dashboard proves the store is bot-neutral.
-Compliance facts defer to the CISO / SiBe rather than inventing policy.
-`MEMORY.md` index auto-generated.
+Verified: 4 tools register; MCP `initialize` handshake returns `instructions` populated;
+search ranks; update bumps version. **Proven live in Claude Desktop** — from a normal chat it
+autonomously updated an existing fact (version bump + `origin: conversation`), the
+update-don't-duplicate path, with no global config.
 
-### 3. Wired into Claude — [.mcp.json](.mcp.json) + protocol baked into the server
-- `.mcp.json` registers the server for Claude Code; the same server is registered in
-  Claude Desktop's `claude_desktop_config.json` (absolute venv path → launches on open).
-- **The Tier-1 capture protocol lives IN the server** ([mcp_server.py](mcp_server.py)),
-  not in a vendor file. It rides along on every connection via:
-  - FastMCP `instructions` field — the full recall → capture → update protocol +
-    sanitization/CISO/SiBe guardrails, sent to the client on connect.
-  - **imperative tool descriptions** — `memory_search` ("CALL THIS FIRST"),
-    `memory_write` ("CALL THIS PROACTIVELY, without being asked"). These are always in
-    the model's context regardless of client, so the directive fires even for clients
-    that don't surface server `instructions`.
-- **Why this path:** it's portable. The protocol travels with the connector, so Claude
-  Desktop, Claude Code, ChatGPT and Vally all inherit the capture behavior with **zero
-  per-user setup** — unlike `CLAUDE.md`, which only Claude Code reads.
-- [CLAUDE.md](CLAUDE.md) is kept as a Claude-Code-only mirror of the same protocol (belt
-  and suspenders); it is not required for the behavior.
+### 2. Store content — [memory/](memory/) (8 facts) + [memory/MEMORY.md](memory/MEMORY.md)
+Adopted **Maike's "valantic Company Brain"** seed set (merged from `storyline`): S/4HANA
+playbook, transformation estimation, CRA template, NIS2 scoping, commerce UX kit, data-platform
+architecture, SAP-commerce expert, engagement-retro. All sanitized to placeholders
+(`<kunde>`, `<host>`, `<path>`). Cross-bot provenance across `claude / chatgpt / copilot /
+vally / human`. `MEMORY.md` is **machine-generated** in the Company Brain style
+(`name — description (Practice · bot)`) so any bot/form write keeps it current.
+My earlier generic security/SRE seed facts were dropped (storyline is canon).
 
-Verified: MCP `initialize` handshake returns the server with `instructions` populated and
-all 4 tools listed; tool descriptions are imperative.
+### 3. Wired into Claude — [.mcp.json](.mcp.json) + Claude Desktop config
+Registered for Claude Code (`.mcp.json`) and Claude Desktop (`claude_desktop_config.json`),
+absolute venv path → launches on open. Tier-1 capture verified end-to-end (see §1).
 
-### 4. REST API — [serve_api.py](serve_api.py)
-Stdlib `http.server` (no extra deps), reads the **same** `memory/` files the MCP server
-writes. Endpoints: `GET /api/memories`, `GET /api/memories/<name>`, `GET /health`. CORS open
-for the dashboard. Returns the frozen JSON contract:
-`[{name, description, type, source_bot, origin, created, version, body}]`.
+### 4. REST API (read + write) — [serve_api.py](serve_api.py)
+Stdlib `http.server`, reads/writes the **same** `memory/` files as the MCP server — one write
+path for bots AND humans. Port **8787** (matches the form + `.env.example`), host/port from env.
+- `GET /api/memories`, `GET /api/memories/<name>`, `GET /health`
+- `POST /api/memories` — add/update a fact (Maike's form saves through this); server is
+  authoritative on `version`. CORS + `OPTIONS` preflight so the browser can write cross-origin.
+- Contract: `[{name, description, type, practice, source_bot, origin, created, version, body}]`
 
-Verified: `/health` → 8; list returns the contract; single fetch + 404 work; a live
-`origin: conversation` write appeared in the API with **no restart** (8→9, then cleaned to 8).
+Verified: GET 200; OPTIONS preflight 204; POST creates a fact (preserving `practice` +
+`human`/`manual`) and re-POST bumps version 1→2.
+
+### 5. Schema extensions for human curation
+Added the two enum values Maike's add-fact form needs (so form + dashboard + `memory_write`
+agree): `source_bot: human` and `origin: manual`. Added a `practice` field to the schema,
+contract, and index; backfilled `practice` into all 8 facts (it had only lived in the index).
+
+### 6. Frontends verified live against the engine
+- **Julian's dashboard** (`dashboard/index.html`, on `feature/dashboard`) — renders the 8 live
+  facts from `GET /api/memories` with practice/source_bot badges (flip `USE_MOCK = false`).
+- **Maike's add-fact form** ([web/add-fact.html](web/add-fact.html)) — green pill, `Save`
+  writes a real `memory/*.md` via `POST`. (Her optional `web/extract_server.py` auto-fill helper
+  is the **only** component that uses the Anthropic key; the store + dashboard use no secrets.)
+
+## Hosting plan (decided, not yet built)
+- **Frontends (dashboard + form) → Vercel** — static, no secrets.
+- **API + MCP → Azure** (Jenny has admin) — one app serving `GET/POST /api/memories` for the
+  frontend AND a **remote HTTP MCP endpoint** (`/mcp`) for bots. Store on Azure Files
+  (persistent, shared) so the existing file code runs unchanged. **No Entra/auth for now** —
+  open read/write for the demo; harden later.
+- **Shared Claude access:** once `/mcp` is remote (HTTP), Jenny's and Maike's Claude Desktop
+  (and Vally/ChatGPT) add the **same Azure `/mcp` URL** as a custom connector → one shared brain.
+
+### Code changes still needed for Azure (small)
+1. MCP server: add **Streamable-HTTP transport** option (`streamable_http_app()` is available)
+   alongside the local stdio mode.
+2. Single deployable that mounts `/mcp` (FastMCP) + `/api/memories` (REST) under one ASGI app
+   (uvicorn). `MEMORY_DIR` already reads from env.
+3. `DEPLOY.md` with the `az` steps + how each person adds the connector to Claude Desktop.
 
 ## Environment note
-System Python is 3.9, too old for the `mcp` SDK (needs 3.10+). Created a `.venv` via `uv`
-(Python 3.12). Run everything with `.venv/bin/python`. `requirements.txt` updated.
+System Python is 3.9 (too old for the `mcp` SDK, needs 3.10+). Created a `.venv` via `uv`
+(Python 3.12). Run everything with `.venv/bin/python`.
 
-## How to run
+## How to run locally
 ```bash
-uv venv --python 3.12 && uv pip install mcp pyyaml   # one-time setup
-.venv/bin/python seed_memory.py                       # seed the store
-.venv/bin/python serve_api.py                         # REST for dashboard (:8000)
-# MCP server auto-launches in Claude Code via .mcp.json
+uv venv --python 3.12 && uv pip install mcp pyyaml      # one-time
+.venv/bin/python serve_api.py                            # REST + write API on :8787
+.venv/bin/python -m http.server 5500 --directory web     # Maike's form  → :5500/add-fact.html
+# Julian's dashboard lives on the feature/dashboard branch (dashboard/index.html)
+# MCP server auto-launches in Claude Code / Desktop via the registered config
 ```
-
-## Capture reliability — current approach vs. optional future layers
-Tier-1 capture is currently driven **only by the server-side path** (instructions field +
-imperative tool descriptions). That makes the model *strongly inclined* to capture, with no
-per-user setup. It is not a hard 100% guarantee — it's an LLM following strong instructions.
-
-**Deferred (maybe later, not done yet):** for Claude Desktop specifically, two extra layers
-would make capture stickier across every chat. Noted here so we don't forget:
-- **Account-level custom instructions** (Desktop → Settings → Profile) — applies a global
-  directive to every chat. Closest thing to a forced system prompt.
-- **Project instructions** — same directive scoped to a shared Project, for team rollout.
-
-Decision for now: ship the server-baked path; revisit the Desktop preference layers later.
-
-## Next / handoff
-- **Live demo wiring:** open this folder / connect the server in Claude Desktop (or Code),
-  confirm the `memory_*` tools appear, run the teach-a-fact round-trip end to end.
-- **Dashboard (Julian):** point at `http://127.0.0.1:8000/api/memories` — contract is frozen.
-- **Cut-line fallback:** if MCP wiring stalls, a thin CLI wrapper around `memory_write`
-  gives the same end-to-end demo (PLAN.md risks section).
