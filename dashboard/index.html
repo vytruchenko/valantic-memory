@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>valantic — Knowledge Layer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: {
+            valantic: {
+              dark:  '#332F49',
+              coral: '#FF604D',
+              light: '#F7F7F7',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-valantic-light min-h-screen text-valantic-dark">
+
+  <!-- Header — white, clean, like valantic.com -->
+  <header class="bg-white border-b border-gray-200 px-8 py-0 flex items-stretch shadow-sm">
+    <!-- Logo block -->
+    <a href="#" class="flex items-center py-4 pr-8 border-r border-gray-200 shrink-0">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 270" class="h-7 w-auto" fill="#332F49">
+        <polygon points="125.32 91.07 106.4 148.74 87.48 91.07 60 91.07 91.99 177.53 120.81 177.53 152.8 91.07 125.32 91.07"/>
+        <path d="M240.91,177.53V91.07H216.12v9.66l-1.44-1.66C208.65,92.12,200,88.6,189,88.6a39.22,39.22,0,0,0-29.11,13.15,49.57,49.57,0,0,0,0,65.11A39.22,39.22,0,0,0,189,180c11,0,19.6-3.52,25.64-10.47l1.44-1.66v9.66Zm-46.58-20.91c-13,0-21.79-9-21.79-22.32S181.3,112,194.33,112s21.79,9,21.79,22.32S207.37,156.62,194.33,156.62Z"/>
+        <path d="M378.89,177.53V91.07H354.1v9.66l-1.44-1.66C346.62,92.12,338,88.6,327,88.6a39.22,39.22,0,0,0-29.11,13.15,49.57,49.57,0,0,0,0,65.11A39.22,39.22,0,0,0,327,180c11,0,19.6-3.52,25.64-10.47l1.44-1.66v9.66ZM332.3,156.62c-13,0-21.79-9-21.79-22.32S319.27,112,332.3,112s21.79,9,21.79,22.32S345.34,156.62,332.3,156.62Z"/>
+        <polygon points="253.12 57.43 253.12 177.53 277.91 177.53 277.91 49.99 253.12 57.43"/>
+        <path d="M432.57,113.39a16.7,16.7,0,0,1,16.68,16.68v47.46H474V124.39a35.78,35.78,0,0,0-56.85-28.93l-1.31,1V91.07H391.1v86.47h24.79V130.07A16.7,16.7,0,0,1,432.57,113.39Z"/>
+        <path d="M499.9,171.52c6.48,5.85,17.64,7.79,35.11,6.09V155.26c-8,.44-13.14.12-16-2.54a7.66,7.66,0,0,1-2.19-5.91v-32H535V91.07H516.86V60.71l-24.79,7.44V91.07H478V114.8h14.1v32C492.07,158.84,494.56,166.69,499.9,171.52Z"/>
+        <rect x="542.82" y="91.07" width="24.79" height="86.47"/>
+        <path d="M555.21,50a15,15,0,1,0,15,15A15.24,15.24,0,0,0,555.21,50Z"/>
+        <path d="M638.38,146c-3.11,5.91-9.7,9.54-17.44,9.54-12,0-20.73-8.94-20.73-21.26S608.92,113,620.94,113c7.69,0,14.14,3.55,17.43,9.55L660,110c-7.74-13.24-22.49-21.43-38.71-21.43-26.15,0-45.88,19.65-45.88,45.7S595.14,180,621.29,180c16.25,0,31-8.26,38.71-21.6Z"/>
+      </svg>
+    </a>
+
+    <!-- Title + subtitle -->
+    <div class="flex items-center px-8 gap-3">
+      <div>
+        <div class="text-base font-semibold leading-tight text-valantic-dark">Knowledge Layer</div>
+        <div class="text-xs text-gray-400 mt-0.5">Shared memory · any bot · one source of truth</div>
+      </div>
+    </div>
+
+    <!-- Coral accent pill (right side) -->
+    <div class="ml-auto flex items-center gap-3 pr-2">
+      <span class="text-xs text-gray-400" id="last-updated"></span>
+      <span class="bg-valantic-coral text-white text-xs font-semibold px-3 py-1 rounded-full">BETA</span>
+    </div>
+  </header>
+
+  <!-- Toolbar -->
+  <div class="bg-white border-b border-gray-200 px-8 py-3 flex flex-wrap gap-4 items-center sticky top-0 z-10">
+    <!-- Search -->
+    <div class="relative min-w-[240px] max-w-xs">
+      <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+      </svg>
+      <input id="search" type="text" placeholder="Search facts…"
+        class="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 text-sm bg-valantic-light focus:outline-none focus:ring-2 focus:ring-valantic-coral/40 focus:border-valantic-coral transition-colors" />
+    </div>
+
+    <div class="w-px h-5 bg-gray-200 hidden sm:block"></div>
+
+    <!-- Type filters -->
+    <div class="flex items-center gap-1.5 flex-wrap">
+      <span class="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mr-1">Type</span>
+      <button data-filter="type" data-value=""           class="chip active">All</button>
+      <button data-filter="type" data-value="reference"  class="chip">Reference</button>
+      <button data-filter="type" data-value="project"    class="chip">Project</button>
+      <button data-filter="type" data-value="user"       class="chip">User</button>
+      <button data-filter="type" data-value="feedback"   class="chip">Feedback</button>
+    </div>
+
+    <div class="w-px h-5 bg-gray-200 hidden sm:block"></div>
+
+    <!-- Bot filters -->
+    <div class="flex items-center gap-1.5 flex-wrap">
+      <span class="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mr-1">Bot</span>
+      <button data-filter="bot" data-value=""          class="chip active">All</button>
+      <button data-filter="bot" data-value="claude"    class="chip">Claude</button>
+      <button data-filter="bot" data-value="chatgpt"   class="chip">ChatGPT</button>
+      <button data-filter="bot" data-value="copilot"   class="chip">Copilot</button>
+      <button data-filter="bot" data-value="vally"     class="chip">Vally</button>
+    </div>
+
+    <div class="ml-auto text-sm text-gray-400 shrink-0 tabular-nums" id="count-label"></div>
+  </div>
+
+  <!-- Main content -->
+  <main class="px-8 py-7 max-w-screen-xl mx-auto">
+
+    <!-- Contradiction banner -->
+    <div id="contradiction-banner" class="hidden mb-5 flex items-center gap-3 bg-white border-l-4 border-valantic-coral rounded-lg px-5 py-3 shadow-sm text-sm text-valantic-dark">
+      <svg class="w-4 h-4 shrink-0 text-valantic-coral" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      </svg>
+      <span id="contradiction-text" class="font-medium"></span>
+    </div>
+
+    <div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+    <div id="empty" class="hidden text-center text-gray-400 py-24 text-sm">No facts match your filters.</div>
+  </main>
+
+  <style>
+    .chip {
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid #e5e7eb;
+      background: white;
+      color: #6b7280;
+      cursor: pointer;
+      transition: all 0.15s;
+      line-height: 1.4;
+    }
+    .chip:hover { background: #f3f4f6; border-color: #d1d5db; }
+    .chip.active { background: #FF604D; color: white; border-color: #FF604D; }
+
+    .badge-bot  { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; line-height: 1; }
+    .badge-type { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1.4; }
+  </style>
+
+  <script>
+    const API_URL  = 'http://127.0.0.1:8787/api/memories';
+    const USE_MOCK = true; // flip to false once Jenny's API is up
+
+    const MOCK = [
+      {
+        name: 'prod-access-policy',
+        description: 'Three-tier production access policy and request procedure',
+        type: 'reference', source_bot: 'claude', created: '2026-06-16', version: 2,
+        body: 'Read-only: 2 weeks tenure + SRE pairing session. Read-write: 6 weeks + SRE sign-off. Privileged: on-call certification (~12 weeks). Requests via #sre-access-requests, tag manager + SRE on rota. Urgent P1: 24 h temporary access, pairing within 5 days.'
+      },
+      {
+        name: 'onboarding-handbook',
+        description: 'Engineering onboarding handbook — first two weeks guide',
+        type: 'reference', source_bot: 'claude', created: '2026-06-16', version: 1,
+        body: 'Day 1: laptop + YubiKey + accounts (email, Slack, GitHub, read-only staging). No prod access day 1. Day 2–5: buddy pairing, git workflow (trunk-based, 2 approvals), on-call intro, blameless post-mortems within 48 h.'
+      },
+      {
+        name: 'team-directory',
+        description: 'Engineering leadership and SRE team directory',
+        type: 'reference', source_bot: 'claude', created: '2026-06-16', version: 1,
+        body: 'Head of Engineering: <person>. Head of SRE: <person> (owns on-call). Head of Platform: <person> (auth/signing/tenant-config). Head of Security: <person>. On-call rotation: check PagerDuty for current week.'
+      },
+      {
+        name: 'cra-gap-assessment',
+        description: 'Where the EU Cyber Resilience Act gap-assessment template lives',
+        type: 'reference', source_bot: 'chatgpt', created: '2026-06-15', version: 1,
+        body: 'The CRA gap-assessment template is at <path>. Owner: <person>. Last reviewed: <date>. Related: [[nis2-scope-checklist]].'
+      },
+      {
+        name: 'nis2-scope-checklist',
+        description: 'NIS2 in-scope entity checklist for valantic clients',
+        type: 'reference', source_bot: 'vally', created: '2026-06-14', version: 1,
+        body: 'Checklist to determine if a client falls under NIS2 essential/important entity classification. Maintained by <person>. Ask CISO for compliance specifics — do not invent policy.'
+      },
+      {
+        name: 'iec62443-reference',
+        description: 'IEC 62443 OT security framework pointer for industrial clients',
+        type: 'reference', source_bot: 'copilot', created: '2026-06-13', version: 1,
+        body: 'IEC 62443 applies to OT/ICS environments. Relevant valantic service line: <team>. For scoping questions contact <person>. Related: [[cra-gap-assessment]].'
+      },
+      {
+        name: 'valantic-brand-colors',
+        description: 'Official valantic brand color palette for dashboards and presentations',
+        type: 'project', source_bot: 'claude', created: '2026-06-16', version: 1,
+        body: 'Dark purple: #332F49. Coral accent: #FF604D. Off-white background: #F7F7F7. Use white text on coral. All dashboards and pitch decks must follow this palette.'
+      },
+      {
+        name: 'hackathon-demo-script',
+        description: 'Live demo script for the 3-min knowledge layer pitch',
+        type: 'project', source_bot: 'claude', created: '2026-06-16', version: 1,
+        body: '1. Show dashboard with seeded facts. 2. Ask Claude a CRA question, tell it to remember. 3. Claude calls memory_write. 4. Refresh → new card with Claude badge. 5. Point to chatgpt/vally cards — same store. 6. Edit a fact → Claude recalls it next session.'
+      }
+    ];
+
+    const BOT_STYLE = {
+      claude:  { bg: 'background:#FFF3F2; color:#C0392B',  dot: 'background:#FF604D', label: 'Claude'  },
+      chatgpt: { bg: 'background:#ECFDF5; color:#166534',  dot: 'background:#22C55E', label: 'ChatGPT' },
+      copilot: { bg: 'background:#EFF6FF; color:#1D4ED8',  dot: 'background:#3B82F6', label: 'Copilot' },
+      vally:   { bg: 'background:#F5F3FF; color:#6D28D9',  dot: 'background:#8B5CF6', label: 'Vally'   },
+    };
+
+    const TYPE_STYLE = {
+      reference: 'background:#F3F4F6; color:#374151',
+      project:   'background:#EEF2FF; color:#3730A3',
+      user:      'background:#F0FDFA; color:#0F766E',
+      feedback:  'background:#FFF1F2; color:#BE123C',
+    };
+
+    let allFacts = [], activeType = '', activeBot = '', searchQ = '';
+
+    async function loadFacts() {
+      if (USE_MOCK) {
+        allFacts = MOCK;
+      } else {
+        try {
+          const res = await fetch(API_URL);
+          allFacts = await res.json();
+        } catch (e) {
+          console.error('API unreachable, falling back to mock:', e);
+          allFacts = MOCK;
+        }
+      }
+      document.getElementById('last-updated').textContent = USE_MOCK ? 'mock data' : `updated ${new Date().toLocaleTimeString()}`;
+      detectContradictions();
+      render();
+    }
+
+    function detectContradictions() {
+      const seen = {}, dupes = new Set();
+      for (const f of allFacts) {
+        const k = f.name.toLowerCase();
+        if (seen[k]) dupes.add(f.name);
+        seen[k] = true;
+      }
+      const banner = document.getElementById('contradiction-banner');
+      const text   = document.getElementById('contradiction-text');
+      if (dupes.size > 0) {
+        text.textContent = `Possible contradiction: duplicate fact names detected — ${[...dupes].join(', ')}`;
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    function render() {
+      const q = searchQ.toLowerCase();
+      const filtered = allFacts.filter(f => {
+        if (activeType && f.type !== activeType) return false;
+        if (activeBot  && f.source_bot !== activeBot) return false;
+        if (q && ![f.description, f.body, f.name].some(s => s.toLowerCase().includes(q))) return false;
+        return true;
+      });
+
+      document.getElementById('count-label').textContent =
+        `${filtered.length} / ${allFacts.length} fact${allFacts.length !== 1 ? 's' : ''}`;
+
+      const grid  = document.getElementById('grid');
+      const empty = document.getElementById('empty');
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+      grid.innerHTML = filtered.map(cardHTML).join('');
+    }
+
+    function cardHTML(f) {
+      const bot      = BOT_STYLE[f.source_bot] || { bg: 'background:#F3F4F6;color:#374151', dot: 'background:#9CA3AF', label: f.source_bot };
+      const typeStyle = TYPE_STYLE[f.type] || 'background:#F3F4F6;color:#374151';
+      const snippet  = f.body.length > 130 ? f.body.slice(0, 130) + '…' : f.body;
+      const linked   = esc(snippet).replace(/\[\[([^\]]+)\]\]/g, '<span style="color:#FF604D;font-style:italic">[[&ZeroWidthSpace;$1]]</span>');
+
+      return `<div style="background:white;border-radius:12px;border:1px solid #E5E7EB;box-shadow:0 1px 3px rgba(0,0,0,.06);padding:24px;display:flex;flex-direction:column;gap:16px;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,.10)';this.style.borderColor='#FBBCB5'" onmouseout="this.style.boxShadow='0 1px 3px rgba(0,0,0,.06)';this.style.borderColor='#E5E7EB'">
+
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span class="badge-type" style="${typeStyle}">${esc(f.type)}</span>
+          <span class="badge-bot" style="${bot.bg}">
+            <span style="width:7px;height:7px;border-radius:50%;${bot.dot};flex-shrink:0"></span>
+            ${bot.label}
+          </span>
+        </div>
+
+        <h3 style="font-size:15px;font-weight:600;color:#332F49;line-height:1.4;margin:0">${esc(f.description)}</h3>
+
+        <p style="font-size:13px;color:#6B7280;line-height:1.65;flex:1;margin:0">${linked}</p>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid #F3F4F6">
+          <span style="font-family:ui-monospace,monospace;font-size:11px;color:#9CA3AF">${esc(f.name)}</span>
+          <span style="font-size:11px;color:#9CA3AF">${esc(f.created)} · v${f.version}</span>
+        </div>
+      </div>`;
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    document.getElementById('search').addEventListener('input', e => { searchQ = e.target.value; render(); });
+
+    document.querySelectorAll('[data-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const { filter, value } = btn.dataset;
+        if (filter === 'type') {
+          activeType = value;
+          document.querySelectorAll('[data-filter="type"]').forEach(b => b.classList.toggle('active', b.dataset.value === value));
+        } else {
+          activeBot = value;
+          document.querySelectorAll('[data-filter="bot"]').forEach(b => b.classList.toggle('active', b.dataset.value === value));
+        }
+        render();
+      });
+    });
+
+    loadFacts();
+  </script>
+</body>
+</html>
