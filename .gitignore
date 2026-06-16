@@ -1,0 +1,22 @@
+# Secrets — never commit
+.env
+.env.local
+*.key
+
+# Managed-agent IDs written by setup scripts
+.agent_id
+.environment_id
+.memory_store_id
+.curator_agent_id
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Outputs
+outputs/
+
+# OS / editor
+.DS_Store
